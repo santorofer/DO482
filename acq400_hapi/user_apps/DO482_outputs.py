@@ -15,22 +15,29 @@ def setOutputTimes(treeName, nchan, delta):
     current = 0.0
     delta   = float(delta) # sec
     end     = 4.0  # sec
-    times   = np.arange(current, end, delta)  
-    eventimes= times[::2] # t2,t4,...
-    oddtimes = times[1::2]# t1,t3,...
 
+    times   = np.arange(current, end, delta)  
+    times_series = tree.getNode('DO482:TIMES')
+    times_series.record = times
+
+    tran_indexes1 = range(0, len(times), 3)
+    tran_indexes2 = range(0, len(times), 4)
+    transitions1=times[tran_indexes1]    
+    transitions2=times[tran_indexes2]
+    
+    transitions=times[[fib_recursive(i) for i in range(10)]] #a fibonacci series of transition times, as an example.
+    
     for i in range(nchan):
         do_chan = tree.getNode('DO482:OUTPUT_%2.2d' % (i+1))
         if (i % 2) == 0:  #Even Channels            
-            do_chan.record = eventimes
+            do_chan.record = transitions
         else:
-            do_chan.record = oddtimes
-        #print(do_chan.data())    
+            do_chan.record = transitions1
 
     tree.write()
     tree.close()
 
-    STL(treeName, times, nchan)
+    #STL(treeName, times, nchan)
 
 def STL(treeName, times, nchan):
 
@@ -76,7 +83,7 @@ def STL(treeName, times, nchan):
         usecs.append(int(elements * 1E6))
     state_list = zip(usecs, states_hex)
     
-    stlpath = '/home/fsantoro/acq400_hapi/user_apps/STL/do_states.stl'
+    stlpath = '/home/fsantoro/HtsDevice/acq400_hapi/user_apps/STL/do_states.stl'
     outputFile=open(stlpath, 'w')
 
     with outputFile  as f:
@@ -84,6 +91,14 @@ def STL(treeName, times, nchan):
         writer.writerows(state_list)
     
     outputFile.close()
+
+def fib_recursive(n):
+    if n == 0:
+        return 0
+    elif n == 1:
+        return 1
+    else:
+        return fib_recursive(n-1) + fib_recursive(n-2)
 
 if __name__ == '__main__':
     print('argument ',sys.argv[1])
