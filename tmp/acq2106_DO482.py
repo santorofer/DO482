@@ -120,6 +120,8 @@ class ACQ2106_DO482(MDSplus.Device):
         do_index      = []
         states_bits   = []
         states_hex    = []
+        #times_times_delta =[]
+        #bits_flipbits     =[]
 
         times_node = self.times.data()
 
@@ -133,6 +135,22 @@ class ACQ2106_DO482(MDSplus.Device):
             do_index.append(do_chan_index)
             do_chan_index = []
 
+            # times_times_delta.append(np.zeros((2*len(do_chan.data()))))
+            # bits_flipbits.append(np.zeros((2*len(do_chan_bits[i]))))
+            
+        #for i in range(nchan):
+        #    do_chan = self.__getattr__('OUTPUT_%2.2d' % (i+1))
+        #
+        #    deltatime   =1E-6 #usec
+        #    times_delta =[]
+        #    for elements in do_chan.data():
+        #        times_delta.append(elements - deltatime)
+        #    #print('times_delta:  ', times_delta)
+        #    #print('do_chan.data ', do_chan.data())
+        #
+        #    times_times_delta[i][1::2] = np.array(do_chan.data())
+        #    times_times_delta[i][0::2] = np.array(times_delta)   
+        #    #print('all times ', times_times_delta[i])
  
         for i in range(nchan):
             do_chan_bits[i][::2]=int(1) #a 1 or a 0 is associated to each of the transition times
@@ -154,6 +172,9 @@ class ACQ2106_DO482(MDSplus.Device):
                 else:
                     flipbits.append(int(1))
             
+            #bits_flipbits[i][1::2] = do_chan_bits[i]
+            #bits_flipbits[i][0::2] = flipbits
+            #
             dwf_chan.record = output_states[i]
  
         for column in output_states.transpose():
