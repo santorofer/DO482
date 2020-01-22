@@ -21,7 +21,7 @@ def setOutputTimes(treeName, nchan, delta):
     times_series.record = times
 
     tran_indexes1 = range(0, len(times), 3)
-    tran_indexes2 = range(0, len(times), 4)
+    tran_indexes2 = range(0, len(times), 2)
     transitions1=times[tran_indexes1]    
     transitions2=times[tran_indexes2]
     
@@ -32,7 +32,7 @@ def setOutputTimes(treeName, nchan, delta):
         if (i % 2) == 0:  #Even Channels            
             do_chan.record = transitions
         else:
-            do_chan.record = transitions1
+            do_chan.record = transitions2
 
     tree.write()
     tree.close()

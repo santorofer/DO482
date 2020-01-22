@@ -54,6 +54,7 @@ class ACQ2106_DO482(MDSplus.Device):
              {'path': ':COMMENT', 'type': 'TEXT'}  ,
              {'path': ':TRIGGER', 'type': 'NUMERIC', 'options':('no_write_shot',)},
              {'path': ':CLOCK'  , 'type': 'AXIS'   , 'options':('no_write_shot',)},
+             {'path': ':SEG_EVENT',   'type':'text',   'value': 'TRANSIENT','options':('no_write_shot',)},
              {'path': ':WRTD_EVENT', 'type': 'NUMERIC', 'options':('no_write_shot',)},
              {'path': ':WRTD_TIME' , 'type': 'NUMERIC'   , 'options':('no_write_shot',)},
              {'path': ':RUNNING','type':'any', 'options':('no_write_model',)},
@@ -92,6 +93,8 @@ class ACQ2106_DO482(MDSplus.Device):
         self.run_wrpg()
         uut.s0.set_arm = '1'
 
+        #Event.setevent(self.seg_event.data())
+
     INIT=init
 
     def stop(self):
@@ -100,16 +103,14 @@ class ACQ2106_DO482(MDSplus.Device):
 
     def load_stl_file(self):
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
-        stl_file_path = self.stl_file.data()
-        print(stl_file_path)
+        print('Path to State Table: ', self.stl_file.data())
 
-        with open(stl_file_path, 'r') as fp:
+        with open(self.stl_file.data(), 'r') as fp:
             uut.load_wrpg(fp.read(), uut.s0.trace)
 
     def run_wrpg(self):
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         self.load_stl_file()
-        #uut.s0.set_arm = '1'
 
     def set_stl(self):
         nchan = 32
@@ -119,27 +120,63 @@ class ACQ2106_DO482(MDSplus.Device):
         do_index      = []
         states_bits   = []
         states_hex    = []
+        times_times_delta =[]
+        bits_flipbits     =[]
+
+        times_node = self.times.data()
 
         for i in range(nchan):
             do_chan = self.__getattr__('OUTPUT_%2.2d' % (i+1))
             do_chan_bits.append(np.zeros((len(do_chan.data()),), dtype=int))
-
+            #print(i, len(do_chan.data()), do_chan.data())
+ 
             for element in do_chan.data():
-                do_chan_index.append(np.where(self.times.data() == element))
+                do_chan_index.append(np.where(times_node == element))
             do_index.append(do_chan_index)
             do_chan_index = []
 
-    
+            times_times_delta.append(np.zeros((2*len(do_chan.data()))))
+            bits_flipbits.append(np.zeros((2*len(do_chan_bits[i]))))
+            
         for i in range(nchan):
-            do_chan_bits[i][::2]=int(1)
+            do_chan = self.__getattr__('OUTPUT_%2.2d' % (i+1))
 
+            deltatime   =1E-6 #usec
+            times_delta =[]
+            for elements in do_chan.data():
+                times_delta.append(elements - deltatime)
+            #print('times_delta:  ', times_delta)
+            #print('do_chan.data ', do_chan.data())
+
+            times_times_delta[i][1::2] = np.array(do_chan.data())
+            times_times_delta[i][0::2] = np.array(times_delta)   
+            #print('all times ', times_times_delta[i])
+ 
+        for i in range(nchan):
+            do_chan_bits[i][::2]=int(1) #a 1 or a 0 is associated to each of the transition times
+   
+            # Then, a state matrix is built. For each channel (a line in the matrix), the values from "do_chan_bits" are
+            # added to the full time series:
             for j in range(len(do_index[i])):
                 output_states[i][do_index[i][j]] = do_chan_bits[i][j]
-
-            print('Transitions per channel: ', i, output_states[i])
-            dwf_chan = self.__getattr__('OUTPUT_WF_%2.2d' % (i+1))        
+            
+            #print('Transitions per channel: ', i, output_states[i])
+            
+            # Building the digital wave functions, and add them into the following node:
+            dwf_chan = self.__getattr__('OUTPUT_WF_%2.2d' % (i+1))
+            
+            flipbits = []
+            for element in do_chan_bits[i]:
+                if element == int(1):
+                    flipbits.append(int(0))
+                else:
+                    flipbits.append(int(1))
+            
+            bits_flipbits[i][1::2] = do_chan_bits[i]
+            bits_flipbits[i][0::2] = flipbits
+            
             dwf_chan.record = output_states[i]
-
+ 
         for column in output_states.transpose():
             binstr = ''
             for element in column:
@@ -149,11 +186,10 @@ class ACQ2106_DO482(MDSplus.Device):
         for elements in states_bits:
             states_hex.append(hex(int(elements,2))[2:]) # the [2:] is because I don't need to 0x part of the hex string
 
-        usecs = []
-        times_node = self.times.data()
+        times_usecs = []
         for elements in times_node:
-            usecs.append(int(elements * 1E6))
-        state_list = zip(usecs, states_hex)
+            times_usecs.append(int(elements * 1E6))
+        state_list = zip(times_usecs, states_hex)
 
         #stlpath = '/home/fsantoro/HtsDevice/acq400_hapi/user_apps/STL/do_states.stl'
         outputFile=open(self.stl_file.data(), 'w')
