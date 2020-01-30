@@ -29,7 +29,7 @@ import time
 import socket
 import math
 import numpy as np
-import paramiko
+import csv
 
 try:
     acq400_hapi = __import__('acq400_hapi', globals(), level=1)
@@ -38,6 +38,7 @@ except:
 
 class _ACQ2106_423ST_DIO482(MDSplus.Device):
     """
+    D-Tacq ACQ2106 with ACQ423 Digitizers (up to 6)  real time streaming support.
 
     32 Channels * number of slots
     Minimum 2Khz Operation
@@ -74,6 +75,10 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         {'path':':LOG_OUTPUT',  'type':'text',   'options':('no_write_model', 'write_once', 'write_shot',)},
         {'path':':INIT_ACTION', 'type':'action', 'valueExpr':"Action(Dispatch('CAMAC_SERVER','INIT',50,None),Method(None,'INIT',head,'auto'))",'options':('no_write_shot',)},
         {'path':':STOP_ACTION', 'type':'action', 'valueExpr':"Action(Dispatch('CAMAC_SERVER','STORE',50,None),Method(None,'STOP',head))",      'options':('no_write_shot',)},
+        {'path':':WRTD_EVENT', 'type': 'NUMERIC', 'options':('no_write_shot',)},
+        {'path':':WRTD_TIME' , 'type': 'NUMERIC'   , 'options':('no_write_shot',)},
+        {'path':':STL_FILE',   'type':'TEXT'},
+        {'path':':TIMES',      'type': 'NUMERIC', 'options':('no_write_shot',)},
     ]
 
     data_socket = -1
@@ -84,7 +89,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         NUM_BUFFERS = 20
 
         def __init__(self,dev):
-            super(_ACQ2106_423ST_DOI482.MDSWorker,self).__init__(name=dev.path)
+            super(_ACQ2106_423ST_DIO482.MDSWorker,self).__init__(name=dev.path)
             threading.Thread.__init__(self)
 
             self.dev = dev.copy()
@@ -290,8 +295,9 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
         self.set_stl()
         self.run_wrpg()
+        print('Arming the ACQ...')
         uut.s0.set_arm = '1'
-
+        print('ACQ armed.')
         self.running.on=True
         thread = self.MDSWorker(self)
         thread.start()
@@ -334,7 +340,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         times_node = self.times.data()
 
         for i in range(nchan):
-            do_chan = self.__getattr__('OUTPUT_%2.2d' % (i+1))
+            do_chan = self.__getattr__('OUTPUT_%3.3d' % (i+1))
             do_chan_bits.append(np.zeros((len(do_chan.data()),), dtype=int))
 
             for element in do_chan.data():
@@ -352,7 +358,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
                 output_states[i][do_index[i][j]] = do_chan_bits[i][j]
 
             # Building the digital wave functions, and add them into the following node:
-            dwf_chan = self.__getattr__('OUTPUT_WF_%2.2d' % (i+1))
+            dwf_chan = self.__getattr__('OUTWF_%3.3d' % (i+1))
 
             flipbits = []
             for element in do_chan_bits[i]:
@@ -398,19 +404,19 @@ def assemble(cls):
             {'path':':INPUT_%3.3d:DECIMATE'%(i+1,),   'type':'NUMERIC','valueExpr':'head.def_decimate',            'options':('no_write_shot',)},
             {'path':':INPUT_%3.3d:COEFFICIENT'%(i+1,),'type':'NUMERIC',                                            'options':('no_write_model', 'write_once',)},
             {'path':':INPUT_%3.3d:OFFSET'%(i+1,),     'type':'NUMERIC',                                            'options':('no_write_model', 'write_once',)},
-            {'path':':OUTPUT_%3.3d' % (i+1),          'type':'NUMERIC', 'options':('write_once')},
-            {'path':':OUTPUT_WF_%3.3d' % (i+1),       'type':'NUMERIC', 'options':('write_once')},
+            {'path':':OUTPUT_%3.3d' % (i+1,),         'type':'NUMERIC', 'options':('write_once',)},
+            {'path':':OUTWF_%3.3d' % (i+1,),          'type':'NUMERIC', 'options':('write_once',)},
         ]
 
 class ACQ2106_423_482_1ST(_ACQ2106_423ST_DIO482): sites=1
 assemble(ACQ2106_423_482_1ST)
-class ACQ2106_423_2ST(_ACQ2106_423ST_DIO482): sites=2
+class ACQ2106_423_482_2ST(_ACQ2106_423ST_DIO482): sites=2
 assemble(ACQ2106_423_482_2ST)
-class ACQ2106_423_3ST(_ACQ2106_423ST_DIO482): sites=3
+class ACQ2106_423_482_3ST(_ACQ2106_423ST_DIO482): sites=3
 assemble(ACQ2106_423_482_3ST)
-class ACQ2106_423_4ST(_ACQ2106_423ST_DIO482): sites=4
+class ACQ2106_423_482_4ST(_ACQ2106_423ST_DIO482): sites=4
 assemble(ACQ2106_423_482_4ST)
-class ACQ2106_423_5ST(_ACQ2106_423ST_DIO482): sites=5
+class ACQ2106_423_482_5ST(_ACQ2106_423ST_DIO482): sites=5
 assemble(ACQ2106_423_482_5ST)
 
 del(assemble)
