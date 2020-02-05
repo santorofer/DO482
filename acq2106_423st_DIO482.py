@@ -324,7 +324,6 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         self.running.on = False
     STOP=stop
 
-    #def trig(self):
     def trig(self, msg=''):
         message = str(msg)
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
@@ -397,7 +396,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
         times_usecs = []
         for elements in times_node:
-            times_usecs.append(int(elements * 1E6))
+            times_usecs.append(int(elements * 1E6)) #in micro-seconds
         state_list = zip(times_usecs, states_hex)
 
         #stlpath = '/home/fsantoro/HtsDevice/acq400_hapi/user_apps/STL/do_states.stl'
@@ -421,8 +420,11 @@ def assemble(cls):
             {'path':':INPUT_%3.3d:DECIMATE'%(i+1,),   'type':'NUMERIC','valueExpr':'head.def_decimate',            'options':('no_write_shot',)},
             {'path':':INPUT_%3.3d:COEFFICIENT'%(i+1,),'type':'NUMERIC',                                            'options':('no_write_model', 'write_once',)},
             {'path':':INPUT_%3.3d:OFFSET'%(i+1,),     'type':'NUMERIC',                                            'options':('no_write_model', 'write_once',)},
-            {'path':':OUTPUT_%3.3d' % (i+1,),         'type':'NUMERIC', 'options':('write_once',)},
-            {'path':':OUTWF_%3.3d' % (i+1,),          'type':'NUMERIC', 'options':('write_once',)},
+        ]
+    for j in range(32):
+        cls.parts += [
+            {'path':':OUTPUT_%3.3d' % (j+1,),         'type':'NUMERIC', 'options':('write_once',)},
+            {'path':':OUTWF_%3.3d' % (j+1,),          'type':'NUMERIC', 'options':('write_once',)},
         ]
 
 class ACQ2106_423_482_1ST(_ACQ2106_423ST_DIO482): sites=1
