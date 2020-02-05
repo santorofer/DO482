@@ -217,14 +217,14 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
                             toread -= nbytes
 
                     except socket.timeout as e:
-                        print("Got a timeout.")
+                        #print("Got a timeout.")
                         err = e.args[0]
                         # this next if/else is a bit redundant, but illustrates how the
                         # timeout exception is setup
 
                         if err == 'timed out':
                             time.sleep(1)
-                            print (' recv timed out, retry later')
+                            #print (' recv timed out, retry later')
                             continue
                         else:
                             print (e)
@@ -243,13 +243,13 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
     def init(self):
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
-        uut.s0.set_knob('set_abort', '1')
+        #uut.s0.set_knob('set_abort', '1')
 
-        if self.ext_clock.length > 0:
-            uut.s0.set_knob('SYS_CLK_FPMUX', 'FPCLK')
-            uut.s0.set_knob('SIG_CLK_MB_FIN', '1000000')
-        else:
-            uut.s0.set_knob('SYS_CLK_FPMUX', 'ZCLK')
+        #if self.ext_clock.length > 0:
+        #    uut.s0.set_knob('SYS_CLK_FPMUX', 'FPCLK')
+        #    uut.s0.set_knob('SIG_CLK_MB_FIN', '1000000')
+        #else:
+        #    uut.s0.set_knob('SYS_CLK_FPMUX', 'ZCLK')
 
         freq = int(self.freq.data())
         uut.s0.set_knob('sync_role', 'master %d TRG:DX=d0' % freq)
@@ -278,6 +278,10 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         else:
             uut.s1.set_knob('trg', '1,1,1')
 
+
+        #Setting WR Clock to 20MHz by first being sure that MBCLK FIN is in fact = 0
+        uut.s0.SIG_CLK_MB_FIN = '0'
+
         #Setting the trigger in the GPG module
         uut.s0.GPG_ENABLE   ='enable'
         uut.s0.GPG_TRG      ='enable'
@@ -293,11 +297,24 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         uut.s1.TRG_SENSE='rising'
         #uut.s0.TRANSIENT_POST = '50000' #post number of samples
 
+        #Setting the MBCLK FIN and WR clock CLK d1
+        uut.s0.SIG_CLK_MB_FIN = 0
+
+        #The following is what the ACQ script called "/mnt/local/set_clk_WR" does to set the WR clock to 20MHz
+        uut.s0.SYS_CLK_FPMUX     = 'ZCLK'
+        uut.s0.SIG_ZCLK_SRC      = 'WR31M25'
+        uut.s0.set_si5326_bypass = 'si5326_31M25-20M.txt'
+
+        #Create the STL table from a series of transition times.
         self.set_stl()
-        self.run_wrpg()
-        print('Arming the ACQ...')
+        
+        #Load the STL into the WRPG hardware
+        self.load_stl_file()
+        print('WRPG has loaded the STL')
+       
+        print('Arming the ACQ.')
         uut.s0.set_arm = '1'
-        print('ACQ armed.')
+        print('ACQ armed. Waiting for a trigger.')
         self.running.on=True
         thread = self.MDSWorker(self)
         thread.start()
@@ -307,9 +324,13 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         self.running.on = False
     STOP=stop
 
-    def trig(self):
+    #def trig(self):
+    def trig(self, msg=''):
+        message = str(msg)
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
-        uut.s0.wrtd_tx = '1 --tx_id=acq2106 tx_immediate'
+        print("The message is: %s" %message)
+        wrtdtx = '1 --tx_id=' + message +' tx_immediate'
+        uut.s0.wrtd_tx = wrtdtx
     TRIG=trig
 
     def setChanScale(self,num):
@@ -319,14 +340,14 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
     def load_stl_file(self):
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
+        print(acq400_hapi.__file__)
         print('Path to State Table: ', self.stl_file.data())
-
-        with open(self.stl_file.data(), 'r') as fp:
-            uut.load_wrpg(fp.read(), uut.s0.trace)
-
-    def run_wrpg(self):
-        uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
-        self.load_stl_file()
+        print('Loading STL table into WRPG')
+        test_stl = '/home/fsantoro/D-TACQ/acq400_hapi/STL/ramp_1step_64samp.stl'
+        #with open(self.stl_file.data(), 'r') as fp:
+        with open(test_stl, 'r') as fp:
+            #uut.load_wrpg(fp.read(), uut.s0.trace)
+            uut.load_wrpg(fp.read(), 1)
 
     def set_stl(self):
         nchan = 32
