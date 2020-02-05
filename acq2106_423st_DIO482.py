@@ -202,7 +202,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
                     try:
                         buf = self.empty_buffers.get(block=False)
                     except Empty:
-                        print("NO BUFFERS AVAILABLE. MAKING NEW ONE")
+                        #print("NO BUFFERS AVAILABLE. MAKING NEW ONE")
                         buf = bytearray(self.segment_bytes)
                         
                     toread =self.segment_bytes
@@ -340,14 +340,10 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
     def load_stl_file(self):
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
-        print(acq400_hapi.__file__)
         print('Path to State Table: ', self.stl_file.data())
         print('Loading STL table into WRPG')
-        test_stl = '/home/fsantoro/D-TACQ/acq400_hapi/STL/ramp_1step_64samp.stl'
-        #with open(self.stl_file.data(), 'r') as fp:
-        with open(test_stl, 'r') as fp:
-            #uut.load_wrpg(fp.read(), uut.s0.trace)
-            uut.load_wrpg(fp.read(), 1)
+        with open(self.stl_file.data(), 'r') as fp:
+            uut.load_wrpg(fp.read(), uut.s0.trace)
 
     def set_stl(self):
         nchan = 32
