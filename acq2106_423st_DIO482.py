@@ -321,6 +321,10 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
     INIT=init
 
     def stop(self):
+        uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
+        print("Disabling GPG")
+        uut.s0.GPG_ENABLE   ='0'
+
         self.running.on = False
     STOP=stop
 
