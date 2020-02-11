@@ -32,7 +32,9 @@ import numpy as np
 import csv
 
 try:
+    print('Imporing acq400_hapi: starting')
     acq400_hapi = __import__('acq400_hapi', globals(), level=1)
+    print('Importing acq400_hapi: done')
 except:
     acq400_hapi = __import__('acq400_hapi', globals())
 
@@ -242,8 +244,13 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
                             self.full_buffers.put(buf)
 
     def init(self):
-        uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
-        #uut.s0.set_knob('set_abort', '1')
+        print('Init: starting')
+        uut = acq400_hapi.Acq400(self.node.data(), monitor=True)
+        print('uut ready')
+        
+        print('Set abort to 1')
+        uut.s0.set_abort = '1'
+
 
         #if self.ext_clock.length > 0:
         #    uut.s0.set_knob('SYS_CLK_FPMUX', 'FPCLK')
@@ -251,9 +258,12 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         #else:
         #    uut.s0.set_knob('SYS_CLK_FPMUX', 'ZCLK')
 
-        freq = int(self.freq.data())
-        uut.s0.set_knob('sync_role', 'master %d TRG:DX=d0' % freq)
+        #print('set sync_role: starting')
+        #freq = int(self.freq.data())
+        #uut.s0.set_knob('sync_role', 'master %d TRG:DX=d0' % freq)
+        #print('set sync_role: done')
 
+        #print('appending slots: starting')
         try:
             slots = [uut.s1]
             slots.append(uut.s2)
@@ -263,15 +273,18 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
             slots.append(uut.s6)
         except:
             pass
-
+        #print('appending slots: done')
+        #
+        #print('looping cards: starting')
         for card in range(self.sites):
-            coeffs =  map(float, slots[card].AI_CAL_ESLO.split(" ")[3:] )
+            coeffs =  map(float, slots[card].AI_CAL_ESLO.split(" ")[3:])
             offsets =  map(float, uut.s1.AI_CAL_EOFF.split(" ")[3:] )
             for i in range(32):
                 coeff = self.__getattr__('input_%3.3d_coefficient'%(card*32+i+1))
                 coeff.record = coeffs[i]
                 offset = self.__getattr__('input_%3.3d_offset'%(card*32+i+1))
                 offset.record = offsets[i]
+        #print('looping cards: done')
 
         if self.trig_mode.data() == 'hard':
             uut.s1.set_knob('trg', '1,0,1')
@@ -280,21 +293,24 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
 
         #Setting WR Clock to 20MHz by first being sure that MBCLK FIN is in fact = 0
+        print('Setting CLK_MB: starting')
         uut.s0.SIG_CLK_MB_FIN = '0'
+        print('Setting CLK_MB: done')
 
         #Setting the trigger in the GPG module
-        uut.s0.GPG_ENABLE   ='enable'
-        uut.s0.GPG_TRG      ='enable'
-        uut.s0.GPG_TRG_DX   ='d0'
-        uut.s0.GPG_TRG_SENSE='rising'
+        uut.s0.GPG_ENABLE    ='enable'
+        uut.s0.GPG_TRG       ='1'    #external=1, internal=0
+        uut.s0.GPG_TRG_DX    ='d0'
+        uut.s0.GPG_TRG_SENSE ='rising'
+        uut.s0.GPG_MODE      ='ONCE'
 
         #Setting SYNC Main Timing Highway Source Routing --> White Rabbit Time Trigger
-        uut.s0.SIG_SRC_TRG_0='WRTT'
+        uut.s0.SIG_SRC_TRG_0 ='WRTT'
 
         #Setting the trigger in ACQ2106 control
-        uut.s1.TRG      ='enable'
-        uut.s1.TRG_DX   ='d0'
-        uut.s1.TRG_SENSE='rising'
+        uut.s1.TRG       ='enable'
+        uut.s1.TRG_DX    ='d0'
+        uut.s1.TRG_SENSE ='rising'
         #uut.s0.TRANSIENT_POST = '50000' #post number of samples
 
         #Setting the MBCLK FIN and WR clock CLK d1
@@ -309,11 +325,14 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         self.set_stl()
         
         #Load the STL into the WRPG hardware
-        self.load_stl_file()
+        traces = True
+        self.load_stl_file(traces)
         print('WRPG has loaded the STL')
-       
+      
         print('Arming the ACQ.')
         uut.s0.set_arm = '1'
+        #uut.s0.state = '1'
+
         print('ACQ armed. Waiting for a trigger.')
         self.running.on=True
         thread = self.MDSWorker(self)
@@ -322,6 +341,14 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
     def stop(self):
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
+        uut.s0.set_abort = '1'
+
+        #print('Set Clean up')
+        #uut.s0.state = '5'
+
+        #print('Set the state back to IDLE')
+        #uut.s0.state = '0'
+
         print("Disabling GPG")
         uut.s0.GPG_ENABLE   ='0'
 
@@ -332,7 +359,10 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         message = str(msg)
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         print("The message is: %s" %message)
-        wrtdtx = '1 --tx_id=' + message +' tx_immediate'
+
+        wrtdtx = '1 --tx_id=' + message +' tx_immediate'  #triggered at once (equivalent to soft-trigger)
+        #wrtdtx = '1 --tx_id=' + message                  #triggered when it sees a rising edge
+
         uut.s0.wrtd_tx = wrtdtx
     TRIG=trig
 
@@ -341,14 +371,16 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         chan.setSegmentScale(MDSplus.ADD(MDSplus.MULTIPLY(chan.COEFFICIENT,MDSplus.dVALUE()),chan.OFFSET))
 
 
-    def load_stl_file(self):
-        uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
+    def load_stl_file(self,traces):
         print('Path to State Table: ', self.stl_file.data())
+        uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
+        uut.s0.trace = traces
         print('Loading STL table into WRPG')
         with open(self.stl_file.data(), 'r') as fp:
             uut.load_wrpg(fp.read(), uut.s0.trace)
 
     def set_stl(self):
+        print("set_stl starting")
         nchan = 32
         output_states = np.zeros((nchan, len(self.times.data())), dtype=int )
         do_chan_bits  = []
@@ -411,7 +443,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
             writer.writerows(state_list)
 
         outputFile.close()
-
+        print("set_stl done")
 
 
 
@@ -427,8 +459,8 @@ def assemble(cls):
         ]
     for j in range(32):
         cls.parts += [
-            {'path':':OUTPUT_%3.3d' % (j+1,),         'type':'NUMERIC', 'options':('write_once',)},
-            {'path':':OUTWF_%3.3d' % (j+1,),          'type':'NUMERIC', 'options':('write_once',)},
+            {'path':':OUTPUT_%3.3d' % (j+1,),         'type':'NUMERIC', 'options':('no_write_shot',)},
+            {'path':':OUTWF_%3.3d' % (j+1,),          'type':'NUMERIC', 'options':('no_write_model',)},
         ]
 
 class ACQ2106_423_482_1ST(_ACQ2106_423ST_DIO482): sites=1
