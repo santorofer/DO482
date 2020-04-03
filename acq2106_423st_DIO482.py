@@ -334,11 +334,6 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         self.load_stl_file(traces)
         print('WRPG has loaded the STL')
       
-        print('Arming the ACQ.')
-        #uut.s0.set_arm = '1'
-        #uut.s0.state = '1'
-
-        print('ACQ armed. Waiting for a trigger.')
         self.running.on=False
         thread = self.MDSWorker(self)
         thread.start()
