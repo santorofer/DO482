@@ -75,7 +75,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         {'path':':RUNNING',     'type':'numeric',                  'options':('no_write_model',)},
         {'path':':LOG_FILE',    'type':'text',   'options':('write_once',)},
         {'path':':LOG_OUTPUT',  'type':'text',   'options':('no_write_model', 'write_once', 'write_shot',)},
-        {'path':':INIT_ACTION', 'type':'action', 'valueExpr':"Action(Dispatch('CAMAC_SERVER','INIT',50,None),Method(None,'INIT',head,'auto'))",'options':('no_write_shot',)},
+        {'path':':INIT_ACTION', 'type':'action', 'valueExpr':"Action(Dispatch('CAMAC_SERVER','INIT',50,None),Method(None,'INIT',head))",'options':('no_write_shot',)},
         {'path':':STOP_ACTION', 'type':'action', 'valueExpr':"Action(Dispatch('CAMAC_SERVER','STORE',50,None),Method(None,'STOP',head))",      'options':('no_write_shot',)},
         {'path':':WRTD_EVENT', 'type': 'NUMERIC', 'options':('no_write_shot',)},
         {'path':':WRTD_TIME' , 'type': 'NUMERIC'   , 'options':('no_write_shot',)},
@@ -193,10 +193,15 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
                     print("DeviceWorker running")
 
                 self.running = True
+                    
+                print('Arming the ACQ.')
 
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((self.node_addr,4210))
                 s.settimeout(6)
+
+                print('ACQ armed. Waiting for a trigger.')
+
 
                 # trigger time out count initialization:
                 first = True
@@ -245,11 +250,11 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
     def init(self):
         print('Init: starting')
-        uut = acq400_hapi.Acq400(self.node.data(), monitor=True)
+        uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         print('uut ready')
         
-        print('Set abort to 1')
-        uut.s0.set_abort = '1'
+        #print('Set abort to 1')
+        #uut.s0.set_abort = '1'
 
 
         #if self.ext_clock.length > 0:
@@ -322,7 +327,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         uut.s0.set_si5326_bypass = 'si5326_31M25-20M.txt'
 
         #Create the STL table from a series of transition times.
-        self.set_stl()
+        # self.set_stl()
         
         #Load the STL into the WRPG hardware
         traces = True
@@ -330,11 +335,11 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         print('WRPG has loaded the STL')
       
         print('Arming the ACQ.')
-        uut.s0.set_arm = '1'
+        #uut.s0.set_arm = '1'
         #uut.s0.state = '1'
 
         print('ACQ armed. Waiting for a trigger.')
-        self.running.on=True
+        self.running.on=False
         thread = self.MDSWorker(self)
         thread.start()
     INIT=init
@@ -344,10 +349,10 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         uut.s0.set_abort = '1'
 
         #print('Set Clean up')
-        #uut.s0.state = '5'
+        uut.s0.state = '5'
 
         #print('Set the state back to IDLE')
-        #uut.s0.state = '0'
+        uut.s0.state = '0'
 
         print("Disabling GPG")
         uut.s0.GPG_ENABLE   ='0'
@@ -360,10 +365,13 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         print("The message is: %s" %message)
 
-        wrtdtx = '1 --tx_id=' + message +' tx_immediate'  #triggered at once (equivalent to soft-trigger)
-        #wrtdtx = '1 --tx_id=' + message                  #triggered when it sees a rising edge
+        #wrtdtx = '1 --tx_id=' + message +' tx_immediate'  #triggered at once (equivalent to soft-trigger)
+        ##wrtdtx = '1 --tx_id=' + message                  #triggered when it sees a rising edge
+        #
+        #uut.s0.wrtd_tx = wrtdtx
 
-        uut.s0.wrtd_tx = wrtdtx
+        wrtdtx = '1 --tx_id=' + message
+        uut.s0.wrtd_tx_immediate = wrtdtx
     TRIG=trig
 
     def setChanScale(self,num):
@@ -372,11 +380,13 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
 
     def load_stl_file(self,traces):
-        print('Path to State Table: ', self.stl_file.data())
+        example_stl=self.stl_file.data()    
+        
+        print('Path to State Table: ', example_stl)
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         uut.s0.trace = traces
         print('Loading STL table into WRPG')
-        with open(self.stl_file.data(), 'r') as fp:
+        with open(example_stl, 'r') as fp:
             uut.load_wrpg(fp.read(), uut.s0.trace)
 
     def set_stl(self):
@@ -385,8 +395,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         output_states = np.zeros((nchan, len(self.times.data())), dtype=int )
         do_chan_bits  = []
         do_chan_index = []
-        do_index      = []
-        states_bits   = []
+
         states_hex    = []
 
         times_node = self.times.data()
