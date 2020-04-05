@@ -17,7 +17,7 @@ def setTransitionTimes(treeName, nchan, delta):
     end     = 4.0  # sec
 
     times   = np.arange(current, end, delta)  
-    times_series = tree.getNode('ACQ2106_482:TIMES')
+    times_series = tree.getNode('ACQ2106_WRPG:TIMES')
     times_series.record = times
 
     tran_indexes1 = range(0, len(times), 3)
@@ -28,7 +28,7 @@ def setTransitionTimes(treeName, nchan, delta):
     transitions=times[[fib_recursive(i) for i in range(10)]] #a fibonacci series of transition times, as an example.
     
     for i in range(nchan):
-        t_times = tree.getNode('ACQ2106_482:OUTPUT_%3.3d' % (i+1))
+        t_times = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (i+1))
         if (i % 2) == 0:  #Even Channels            
             t_times.record = transitions
         else:
@@ -37,7 +37,7 @@ def setTransitionTimes(treeName, nchan, delta):
     tree.write()
     tree.close()
 
-    STL(treeName, times, nchan)
+    #STL(treeName, times, nchan)
 
 def STL(treeName, times, nchan):
     print("set_stl starting")

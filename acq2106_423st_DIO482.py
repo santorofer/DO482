@@ -252,21 +252,6 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         print('Init: starting')
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         print('uut ready')
-        
-        #print('Set abort to 1')
-        #uut.s0.set_abort = '1'
-
-
-        #if self.ext_clock.length > 0:
-        #    uut.s0.set_knob('SYS_CLK_FPMUX', 'FPCLK')
-        #    uut.s0.set_knob('SIG_CLK_MB_FIN', '1000000')
-        #else:
-        #    uut.s0.set_knob('SYS_CLK_FPMUX', 'ZCLK')
-
-        #print('set sync_role: starting')
-        #freq = int(self.freq.data())
-        #uut.s0.set_knob('sync_role', 'master %d TRG:DX=d0' % freq)
-        #print('set sync_role: done')
 
         #print('appending slots: starting')
         try:
@@ -278,9 +263,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
             slots.append(uut.s6)
         except:
             pass
-        #print('appending slots: done')
-        #
-        #print('looping cards: starting')
+
         for card in range(self.sites):
             coeffs =  map(float, slots[card].AI_CAL_ESLO.split(" ")[3:])
             offsets =  map(float, uut.s1.AI_CAL_EOFF.split(" ")[3:] )
@@ -289,7 +272,6 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
                 coeff.record = coeffs[i]
                 offset = self.__getattr__('input_%3.3d_offset'%(card*32+i+1))
                 offset.record = offsets[i]
-        #print('looping cards: done')
 
         if self.trig_mode.data() == 'hard':
             uut.s1.set_knob('trg', '1,0,1')
@@ -325,14 +307,6 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         uut.s0.SYS_CLK_FPMUX     = 'ZCLK'
         uut.s0.SIG_ZCLK_SRC      = 'WR31M25'
         uut.s0.set_si5326_bypass = 'si5326_31M25-20M.txt'
-
-        #Create the STL table from a series of transition times.
-        # self.set_stl()
-        
-        #Load the STL into the WRPG hardware
-        traces = True
-        self.load_stl_file(traces)
-        print('WRPG has loaded the STL')
       
         self.running.on=False
         thread = self.MDSWorker(self)
@@ -372,84 +346,6 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
     def setChanScale(self,num):
         chan=self.__getattr__('INPUT_%3.3d' % num)
         chan.setSegmentScale(MDSplus.ADD(MDSplus.MULTIPLY(chan.COEFFICIENT,MDSplus.dVALUE()),chan.OFFSET))
-
-
-    def load_stl_file(self,traces):
-        example_stl=self.stl_file.data()    
-        
-        print('Path to State Table: ', example_stl)
-        uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
-        uut.s0.trace = traces
-        print('Loading STL table into WRPG')
-        with open(example_stl, 'r') as fp:
-            uut.load_wrpg(fp.read(), uut.s0.trace)
-
-    def set_stl(self):
-        print("set_stl starting")
-        nchan = 32
-        output_states = np.zeros((nchan, len(self.times.data())), dtype=int )
-        do_chan_bits  = []
-        do_chan_index = []
-
-        states_hex    = []
-
-        times_node = self.times.data()
-
-        for i in range(nchan):
-            do_chan = self.__getattr__('OUTPUT_%3.3d' % (i+1))
-            do_chan_bits.append(np.zeros((len(do_chan.data()),), dtype=int))
-
-            for element in do_chan.data():
-                do_chan_index.append(np.where(times_node == element))
-            do_index.append(do_chan_index)
-            do_chan_index = []
-
-
-        for i in range(nchan):
-            do_chan_bits[i][::2]=int(1) #a 1 or a 0 is associated to each of the transition times
-
-            # Then, a state matrix is built. For each channel (a line in the matrix), the values from "do_chan_bits" are
-            # added to the full time series:
-            for j in range(len(do_index[i])):
-                output_states[i][do_index[i][j]] = do_chan_bits[i][j]
-
-            # Building the digital wave functions, and add them into the following node:
-            dwf_chan = self.__getattr__('OUTWF_%3.3d' % (i+1))
-
-            flipbits = []
-            for element in do_chan_bits[i]:
-                if element == int(1):
-                    flipbits.append(int(0))
-                else:
-                    flipbits.append(int(1))
-
-            dwf_chan.record = output_states[i]
-
-        for column in output_states.transpose():
-            binstr = ''
-            for element in column:
-                binstr += str(element)
-            states_bits.append(binstr)
-
-        for elements in states_bits:
-            states_hex.append(hex(int(elements,2))[2:]) # the [2:] is because I don't need to 0x part of the hex string
-
-        times_usecs = []
-        for elements in times_node:
-            times_usecs.append(int(elements * 1E6)) #in micro-seconds
-        state_list = zip(times_usecs, states_hex)
-
-        #stlpath = '/home/fsantoro/HtsDevice/acq400_hapi/user_apps/STL/do_states.stl'
-        outputFile=open(self.stl_file.data(), 'w')
-
-        with outputFile  as f:
-            writer = csv.writer(f, delimiter=',')
-            writer.writerows(state_list)
-
-        outputFile.close()
-        print("set_stl done")
-
-
 
 
 def assemble(cls):
