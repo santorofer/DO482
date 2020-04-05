@@ -28,11 +28,11 @@ def setTransitionTimes(treeName, nchan, delta):
     transitions=times[[fib_recursive(i) for i in range(10)]] #a fibonacci series of transition times, as an example.
     
     for i in range(nchan):
-        do_chan = tree.getNode('ACQ2106_482:OUTPUT_%3.3d' % (i+1))
+        t_times = tree.getNode('ACQ2106_482:OUTPUT_%3.3d' % (i+1))
         if (i % 2) == 0:  #Even Channels            
-            do_chan.record = transitions
+            t_times.record = transitions
         else:
-            do_chan.record = transitions2
+            t_times.record = transitions2
 
     tree.write()
     tree.close()
@@ -44,41 +44,41 @@ def STL(treeName, times, nchan):
     tree = Tree(treeName, -1)
 
     output_states = np.zeros((nchan, len(times)), dtype=int ) # Matrix of output states
-    do_chan_bits  = [] # indexes where the times (t) and the transition times (tt) are the same
-    do_chan_index = [] # collect indexes where the t and tt are the same, for all the channels
-    do_index      = []
+    t_times_bits  = [] # the elements are the transition bits, 1s or 0s, for each channel.
+    t_times_index = [] # collect indexes where the t and tt are the same, for all the channels
+
     states_hex    = []
     states_bits   = []
+
     times_node = times
 
     for i in range(nchan):
-        # DO_chan contains the transition times saved in the DO482:OUTPUT_xxx node
-        do_chan = tree.getNode('ACQ2106_482:OUTPUT_%3.3d' % (i+1))
-        do_chan_bits.append(np.zeros((len(do_chan.data()),), dtype=int))
+        # t_times contains the transition times saved in the DO482:OUTPUT_xxx node        
+        t_times = tree.getNode('ACQ2106_482:OUTPUT_%3.3d' % (i+1))
+        t_times_bits.append(np.zeros((len(t_times.data()),), dtype=int))
             
         # Look for the indexes in the time series where the transitions are.
-        for element in do_chan.data():
-            do_chan_index.append(np.where(times_node == element))
-        do_index.append(do_chan_index)
-        do_chan_index = []
+        for element in t_times.data():
+            t_times_index.append(np.where(times_node == element))
 
+        t_times_bits[i][::2]=int(1) #a 1 or a 0 is associated to each of the transition times
 
-    for i in range(nchan):
-        do_chan_bits[i][::2]=int(1) #a 1 or a 0 is associated to each of the transition times
-
-        # Then, a state matrix is built. For each channel (a row in the matrix), the values from "do_chan_bits" are
+        # Then, a state matrix is built. For each channel (a row in the matrix), the values from "t_times_bits" are
         # place in the positions of the full time series:
-        for j in range(len(do_index[i])):
-            output_states[i][do_index[i][j]] = do_chan_bits[i][j]
+        for j in range(len(t_times_index)):
+            output_states[i][t_times_index[j]] = t_times_bits[i][j]
 
         # Building the digital wave functions, and add them into the following node:
         #dwf_chan = tree.getNode('ACQ2106_482:OUTWF_%3.3d' % (i+1))
         #dwf_chan.record = output_states[i]
+
+        t_times_index = [] # re-initialize to startover for the next channel.
+
     print(output_states)
-    
-    for column in output_states.transpose():
+
+    for row in output_states.transpose():
         binstr = ''
-        for element in column:
+        for element in row:
             binstr += str(element)
         states_bits.append(binstr)
     
