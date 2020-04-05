@@ -38,7 +38,7 @@ try:
 except:
     acq400_hapi = __import__('acq400_hapi', globals())
 
-class _ACQ2106_423ST_DIO482(MDSplus.Device):
+class ACQ2106_DIO482(MDSplus.Device):
     """
     D-Tacq ACQ2106 with ACQ423 Digitizers (up to 6)  real time streaming support.
 
@@ -59,7 +59,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
     """
 
-    carrier_parts=[
+    parts=[
         {'path':':NODE',        'type':'text',                     'options':('no_write_shot',)},
         {'path':':COMMENT',     'type':'text',                     'options':('no_write_shot',)},
         {'path':':TRIGGER',     'type':'numeric', 'value': 0.0,    'options':('no_write_shot',)},
@@ -83,12 +83,14 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         {'path':':TIMES',      'type': 'NUMERIC', 'options':('no_write_shot',)},
     ]
 
-    data_socket = -1
-
-    trig_types=[ 'hard', 'soft', 'automatic']
+    for j in range(32):
+        parts.append()
+            {'path':':OUTPUT_%3.3d' % (j+1,),         'type':'NUMERIC', 'options':('no_write_shot',)},
+            {'path':':OUTWF_%3.3d' % (j+1,),          'type':'NUMERIC', 'options':('no_write_model',)},
+        )
 
     def init(self):
-        print('Init: starting')
+        print('GPG INIT: starting')
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         print('uut ready')
 
@@ -117,7 +119,6 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
     def set_stl(self):
         print("set_stl starting")
         nchan = 32
-        tree = Tree(treeName, -1)
 
         output_states = np.zeros((nchan, len(self.times.data())), dtype=int ) # Matrix of output states
         t_times_bits  = [] # the elements are the transition bits, 1s or 0s, for each channel.
@@ -150,15 +151,11 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
             t_times_index = [] # re-initialize to startover for the next channel.
 
-        print(output_states)
-
         for row in output_states.transpose():
             binstr = ''
             for element in row:
                 binstr += str(element)
             states_bits.append(binstr)
-
-        print(states_bits)
 
         for elements in states_bits:
             states_hex.append(hex(int(elements,2))[2:]) # the [2:] is because I don't need to 0x part of the hex string
@@ -180,25 +177,3 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
 
 
-
-def assemble(cls):
-    cls.parts = list(_ACQ2106_423ST_DIO482.carrier_parts)
-
-    for j in range(32):
-        cls.parts += [
-            {'path':':OUTPUT_%3.3d' % (j+1,),         'type':'NUMERIC', 'options':('no_write_shot',)},
-            {'path':':OUTWF_%3.3d' % (j+1,),          'type':'NUMERIC', 'options':('no_write_model',)},
-        ]
-
-class ACQ2106_423_482_1ST(_ACQ2106_423ST_DIO482): sites=1
-assemble(ACQ2106_423_482_1ST)
-class ACQ2106_423_482_2ST(_ACQ2106_423ST_DIO482): sites=2
-assemble(ACQ2106_423_482_2ST)
-class ACQ2106_423_482_3ST(_ACQ2106_423ST_DIO482): sites=3
-assemble(ACQ2106_423_482_3ST)
-class ACQ2106_423_482_4ST(_ACQ2106_423ST_DIO482): sites=4
-assemble(ACQ2106_423_482_4ST)
-class ACQ2106_423_482_5ST(_ACQ2106_423ST_DIO482): sites=5
-assemble(ACQ2106_423_482_5ST)
-
-del(assemble)
