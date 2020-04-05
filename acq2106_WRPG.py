@@ -32,7 +32,7 @@ import numpy as np
 import csv
 
 try:
-    print('Imporing acq400_hapi: starting')
+    print('Importing acq400_hapi: starting')
     acq400_hapi = __import__('acq400_hapi', globals(), level=1)
     print('Importing acq400_hapi: done')
 except:
@@ -84,10 +84,8 @@ class ACQ2106_WRPG(MDSplus.Device):
     ]
 
     for j in range(32):
-        parts.append()
-            {'path':':OUTPUT_%3.3d' % (j+1,),         'type':'NUMERIC', 'options':('no_write_shot',)},
-            {'path':':OUTWF_%3.3d' % (j+1,),          'type':'NUMERIC', 'options':('no_write_model',)},
-        )
+        parts.append({'path':':OUTPUT_%3.3d' % (j+1,), 'type':'NUMERIC', 'options':('no_write_shot',)})
+        parts.append({'path':':OUTWF_%3.3d' % (j+1,),  'type':'NUMERIC', 'options':('no_write_model',)})
 
     def init(self):
         print('GPG INIT: starting')
