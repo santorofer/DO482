@@ -129,7 +129,7 @@ class ACQ2106_WRPG(MDSplus.Device):
 
         for i in range(nchan):
             # t_times contains the transition times saved in the DO482:OUTPUT_xxx node        
-            t_times = self.__getattr__('ACQ2106_482:OUTPUT_%3.3d' % (i+1))
+            t_times = self.__getattr__('\DAQTEST::TOP:ACQ2106_482:OUTPUT_%3.3d' % (i+1))
             t_times_bits.append(np.zeros((len(t_times.data()),), dtype=int))
                 
             # Look for the indexes in the time series where the transitions are.
@@ -144,7 +144,7 @@ class ACQ2106_WRPG(MDSplus.Device):
                 output_states[i][t_times_index[j]] = t_times_bits[i][j]
 
             # Building the digital wave functions, and add them into the following node:
-            dwf_chan = self.__getattr__('ACQ2106_482:OUTWF_%3.3d' % (i+1))
+            dwf_chan = self.__getattr__('\DAQTEST::TOP:ACQ2106_482:OUTWF_%3.3d' % (i+1))
             dwf_chan.record = output_states[i]
 
             t_times_index = [] # re-initialize to startover for the next channel.
