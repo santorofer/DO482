@@ -38,7 +38,7 @@ try:
 except:
     acq400_hapi = __import__('acq400_hapi', globals())
 
-class ACQ2106_DIO482(MDSplus.Device):
+class ACQ2106_WRPG(MDSplus.Device):
     """
     D-Tacq ACQ2106 with ACQ423 Digitizers (up to 6)  real time streaming support.
 
