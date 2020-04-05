@@ -285,11 +285,11 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         print('Setting CLK_MB: done')
 
         #Setting the trigger in the GPG module
-        uut.s0.GPG_ENABLE    ='enable'
-        uut.s0.GPG_TRG       ='1'    #external=1, internal=0
-        uut.s0.GPG_TRG_DX    ='d0'
-        uut.s0.GPG_TRG_SENSE ='rising'
-        uut.s0.GPG_MODE      ='ONCE'
+        #uut.s0.GPG_ENABLE    ='enable'
+        #uut.s0.GPG_TRG       ='1'    #external=1, internal=0
+        #uut.s0.GPG_TRG_DX    ='d0'
+        #uut.s0.GPG_TRG_SENSE ='rising'
+        #uut.s0.GPG_MODE      ='ONCE'
 
         #Setting SYNC Main Timing Highway Source Routing --> White Rabbit Time Trigger
         uut.s0.SIG_SRC_TRG_0 ='WRTT'

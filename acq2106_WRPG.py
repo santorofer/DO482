@@ -91,10 +91,19 @@ class ACQ2106_WRPG(MDSplus.Device):
         print('GPG INIT: starting')
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         print('uut ready')
+        
+        #Setting the trigger in the GPG module
+        uut.s0.GPG_ENABLE    ='enable'
+        uut.s0.GPG_TRG       ='1'    #external=1, internal=0
+        uut.s0.GPG_TRG_DX    ='d0'
+        uut.s0.GPG_TRG_SENSE ='rising'
+        uut.s0.GPG_MODE      ='ONCE'
 
         #Create the STL table from a series of transition times.
+        print("Building STL: start")
         self.set_stl()
-        
+        print("Building STL: end")
+
         #Load the STL into the WRPG hardware: GPG
         traces = True
         self.load_stl_file(traces)
@@ -115,7 +124,7 @@ class ACQ2106_WRPG(MDSplus.Device):
             uut.load_wrpg(fp.read(), uut.s0.trace)
 
     def set_stl(self):
-        print("set_stl starting")
+        
         nchan = 32
 
         output_states = np.zeros((nchan, len(self.times.data())), dtype=int ) # Matrix of output states
@@ -129,7 +138,7 @@ class ACQ2106_WRPG(MDSplus.Device):
 
         for i in range(nchan):
             # t_times contains the transition times saved in the DO482:OUTPUT_xxx node        
-            t_times = self.__getattr__('\DAQTEST::TOP:ACQ2106_482:OUTPUT_%3.3d' % (i+1))
+            t_times = self.__getattr__('OUTPUT_%3.3d' % (i+1))
             t_times_bits.append(np.zeros((len(t_times.data()),), dtype=int))
                 
             # Look for the indexes in the time series where the transitions are.
@@ -144,7 +153,7 @@ class ACQ2106_WRPG(MDSplus.Device):
                 output_states[i][t_times_index[j]] = t_times_bits[i][j]
 
             # Building the digital wave functions, and add them into the following node:
-            dwf_chan = self.__getattr__('\DAQTEST::TOP:ACQ2106_482:OUTWF_%3.3d' % (i+1))
+            dwf_chan = self.__getattr__('OUTWF_%3.3d' % (i+1))
             dwf_chan.record = output_states[i]
 
             t_times_index = [] # re-initialize to startover for the next channel.
@@ -171,7 +180,5 @@ class ACQ2106_WRPG(MDSplus.Device):
             writer.writerows(state_list)
 
         outputFile.close()
-        print("set_stl done")
-
 
 
