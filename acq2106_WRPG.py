@@ -62,23 +62,12 @@ class ACQ2106_WRPG(MDSplus.Device):
     parts=[
         {'path':':NODE',        'type':'text',                     'options':('no_write_shot',)},
         {'path':':COMMENT',     'type':'text',                     'options':('no_write_shot',)},
-        {'path':':TRIGGER',     'type':'numeric', 'value': 0.0,    'options':('no_write_shot',)},
-        {'path':':TRIG_MODE',   'type':'text',    'value': 'hard', 'options':('no_write_shot',)},
-        {'path':':EXT_CLOCK',   'type':'axis',                     'options':('no_write_shot',)},
-        {'path':':FREQ',        'type':'numeric', 'value': 16000,  'options':('no_write_shot',)},
-        {'path':':DEF_DECIMATE','type':'numeric', 'value': 1,      'options':('no_write_shot',)},
-        {'path':':SEG_LENGTH',  'type':'numeric', 'value': 8000,   'options':('no_write_shot',)},
-        {'path':':MAX_SEGMENTS','type':'numeric', 'value': 1000,   'options':('no_write_shot',)},
-        {'path':':SEG_EVENT',   'type':'text',   'value': 'STREAM','options':('no_write_shot',)},
         {'path':':TRIG_TIME',   'type':'numeric',                  'options':('write_shot',)},
-        {'path':':TRIG_STR',    'type':'text',   'valueExpr':"EXT_FUNCTION(None,'ctime',head.TRIG_TIME)",'options':('nowrite_shot',)},
         {'path':':RUNNING',     'type':'numeric',                  'options':('no_write_model',)},
         {'path':':LOG_FILE',    'type':'text',   'options':('write_once',)},
         {'path':':LOG_OUTPUT',  'type':'text',   'options':('no_write_model', 'write_once', 'write_shot',)},
         {'path':':INIT_ACTION', 'type':'action', 'valueExpr':"Action(Dispatch('CAMAC_SERVER','INIT',50,None),Method(None,'INIT',head))",'options':('no_write_shot',)},
         {'path':':STOP_ACTION', 'type':'action', 'valueExpr':"Action(Dispatch('CAMAC_SERVER','STORE',50,None),Method(None,'STOP',head))",      'options':('no_write_shot',)},
-        {'path':':WRTD_EVENT', 'type': 'NUMERIC', 'options':('no_write_shot',)},
-        {'path':':WRTD_TIME' , 'type': 'NUMERIC'   , 'options':('no_write_shot',)},
         {'path':':STL_FILE',   'type':'TEXT'},
         {'path':':TIMES',      'type': 'NUMERIC', 'options':('no_write_shot',)},
     ]
@@ -105,7 +94,7 @@ class ACQ2106_WRPG(MDSplus.Device):
         print("Building STL: end")
 
         #Load the STL into the WRPG hardware: GPG
-        traces = True
+        traces = False  # True: shows debugging information during loading
         self.load_stl_file(traces)
         print('WRPG has loaded the STL')
       
@@ -172,7 +161,7 @@ class ACQ2106_WRPG(MDSplus.Device):
             times_usecs.append(int(elements * 1E6)) #in micro-seconds
         state_list = zip(times_usecs, states_hex)
 
-        #stlpath = '/home/fsantoro/HtsDevice/acq400_hapi/user_apps/STL/do_states.stl'
+        #For example, stlpath = '/home/fsantoro/HtsDevice/acq400_hapi/user_apps/STL/do_states.stl'
         outputFile=open(self.stl_file.data(), 'w')
 
         with outputFile as f:
