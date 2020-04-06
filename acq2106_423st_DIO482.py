@@ -224,14 +224,14 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
                             toread -= nbytes
 
                     except socket.timeout as e:
-                        #print("Got a timeout.")
+                        print("Got a timeout.")
                         err = e.args[0]
                         # this next if/else is a bit redundant, but illustrates how the
                         # timeout exception is setup
 
                         if err == 'timed out':
                             time.sleep(1)
-                            #print (' recv timed out, retry later')
+                            print (' recv timed out, retry later')
                             continue
                         else:
                             print (e)
@@ -308,7 +308,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         uut.s0.SIG_ZCLK_SRC      = 'WR31M25'
         uut.s0.set_si5326_bypass = 'si5326_31M25-20M.txt'
       
-        self.running.on=False
+        self.running.on=True
         thread = self.MDSWorker(self)
         thread.start()
     INIT=init
