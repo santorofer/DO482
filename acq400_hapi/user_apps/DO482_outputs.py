@@ -20,7 +20,7 @@ def setTransitionTimes(treeName, nchan, delta):
     times_series = tree.getNode('ACQ2106_WRPG:TIMES')
     times_series.record = times
 
-    tran_indexes1 = range(0, len(times), 3)
+    tran_indexes1 = range(0, len(times), 5)
     tran_indexes2 = range(0, len(times), 2)
     transitions1=times[tran_indexes1]    
     transitions2=times[tran_indexes2]
@@ -30,14 +30,14 @@ def setTransitionTimes(treeName, nchan, delta):
     for i in range(nchan):
         t_times = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (i+1))
         if (i % 2) == 0:  #Even Channels            
-            t_times.record = transitions
+            t_times.record = transitions1
         else:
             t_times.record = transitions2
 
     tree.write()
     tree.close()
 
-    #STL(treeName, times, nchan)
+    STL(treeName, times, nchan)
 
 def STL(treeName, times, nchan):
     print("set_stl starting")
