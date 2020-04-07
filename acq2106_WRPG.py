@@ -123,8 +123,6 @@ class ACQ2106_WRPG(MDSplus.Device):
         states_hex    = []
         states_bits   = []
 
-
-        for i in range(nchan):
         for i in range(nchan):
             # chan_t_times contains the transition times saved in the DO482:OUTPUT_xxx node        
             chan_t_times = self.__getattr__('OUTPUT_%3.3d' % (i+1))
