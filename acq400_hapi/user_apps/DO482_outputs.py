@@ -45,11 +45,8 @@ def STL(treeName, times, nchan):
     print("set_stl starting")
     tree = Tree(treeName, -1)
 
-    output_states = np.zeros((nchan, len(times)), dtype=int ) # Matrix of output states
-    
     all_t_times = []
     t_times_bits  = [] # the elements are the transition bits, 1s or 0s, for each channel.
-    t_times_index = [] # collect indexes where the t and tt are the same, for all the channels
     chan_bits = []
 
     states_hex    = []
@@ -68,7 +65,6 @@ def STL(treeName, times, nchan):
         # Building the digital wave functions, and add them into the following node:
         #dwf_chan = tree.getNode('ACQ2106_482:OUTWF_%3.3d' % (i+1))
         #dwf_chan.record = output_states[i]
-    print(t_times_bits)
 
     t_times = []
     for i in all_t_times:
@@ -94,8 +90,6 @@ def STL(treeName, times, nchan):
             binstr += str(element)
         states_bits.append(binstr)
     
-    print(states_bits)
-
     for elements in states_bits:
         states_hex.append(hex(int(elements,2))[2:]) # the [2:] is because I don't need to 0x part of the hex string
 
