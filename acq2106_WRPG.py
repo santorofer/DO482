@@ -131,7 +131,7 @@ class ACQ2106_WRPG(MDSplus.Device):
             all_t_times.extend(chan_t_times)
             chan_bits[i][::2]=int(1)
 
-            t_times_bits.append(merge(chan_t_times.data(),chan_bits[i]))
+            t_times_bits.append(self.merge(chan_t_times.data(),chan_bits[i]))
 
             # Building the digital wave functions, and add them into the following node:
             #dwf_chan = self.__getattr__('OUTWF_%3.3d' % (i+1))
@@ -144,7 +144,6 @@ class ACQ2106_WRPG(MDSplus.Device):
 
         t_times_bits_flat = [item for sublist in t_times_bits for item in sublist]
 
-        print(sorted(t_times))
         t_times = sorted(t_times)
 
         for element in t_times:
@@ -178,6 +177,6 @@ class ACQ2106_WRPG(MDSplus.Device):
         outputFile.close()
 
 
-    def merge(list1, list2): 
+    def merge(self, list1, list2): 
         merged_list = [(list1[i], list2[i]) for i in range(0, len(list1))] 
         return merged_list
