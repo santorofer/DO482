@@ -224,14 +224,14 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
                             toread -= nbytes
 
                     except socket.timeout as e:
-                        print("Got a timeout.")
+                        #print("Got a timeout.")
                         err = e.args[0]
                         # this next if/else is a bit redundant, but illustrates how the
                         # timeout exception is setup
 
                         if err == 'timed out':
                             time.sleep(1)
-                            print (' recv timed out, retry later')
+                            #print (' recv timed out, retry later')
                             continue
                         else:
                             print (e)
@@ -284,17 +284,10 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         uut.s0.SIG_CLK_MB_FIN = '0'
         print('Setting CLK_MB: done')
 
-        #Setting the trigger in the GPG module
-        #uut.s0.GPG_ENABLE    ='enable'
-        #uut.s0.GPG_TRG       ='1'    #external=1, internal=0
-        #uut.s0.GPG_TRG_DX    ='d0'
-        #uut.s0.GPG_TRG_SENSE ='rising'
-        #uut.s0.GPG_MODE      ='ONCE'
-
         #Setting SYNC Main Timing Highway Source Routing --> White Rabbit Time Trigger
         uut.s0.SIG_SRC_TRG_0 ='WRTT'
 
-        #Setting the trigger in ACQ2106 control
+        #Setting the trigger in ACQ2106 stream control
         uut.s1.TRG       ='enable'
         uut.s1.TRG_DX    ='d0'
         uut.s1.TRG_SENSE ='rising'
