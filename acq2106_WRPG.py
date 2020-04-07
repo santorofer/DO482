@@ -149,10 +149,10 @@ class ACQ2106_WRPG(MDSplus.Device):
         for element in t_times:
             same_t_times = [item for item in t_times_bits_flat 
                     if item[0] == element]
-            print(same_t_times)
-            n = 1 # N. . .
+            
+            n = 1 # n=1 in the tuple are the transition times
             bins = [x[n] for x in same_t_times]
-            print(bins)
+            
 
             binstr = ''
             for element in bins:
