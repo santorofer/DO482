@@ -69,7 +69,6 @@ class ACQ2106_WRPG(MDSplus.Device):
         {'path':':INIT_ACTION', 'type':'action', 'valueExpr':"Action(Dispatch('CAMAC_SERVER','INIT',50,None),Method(None,'INIT',head))",'options':('no_write_shot',)},
         {'path':':STOP_ACTION', 'type':'action', 'valueExpr':"Action(Dispatch('CAMAC_SERVER','STORE',50,None),Method(None,'STOP',head))",      'options':('no_write_shot',)},
         {'path':':STL_FILE',   'type':'TEXT'},
-        {'path':':TIMES',      'type': 'NUMERIC', 'options':('no_write_shot',)},
     ]
 
     for j in range(32):
@@ -113,58 +112,81 @@ class ACQ2106_WRPG(MDSplus.Device):
             uut.load_wrpg(fp.read(), uut.s0.trace)
 
     def set_stl(self):
-        
         nchan = 32
-
-        all_t_times = []
-        t_times_bits  = [] # the elements are the transition bits, 1s or 0s, for each channel.
-        chan_bits = []
 
         states_hex    = []
         states_bits   = []
+        all_t_times   = []
+        all_t_times_states = []
 
+        # Selecting unique transition times from all the channels:
         for i in range(nchan):
-            # chan_t_times contains the transition times saved in the DO482:OUTPUT_xxx node        
             chan_t_times = self.__getattr__('OUTPUT_%3.3d' % (i+1))
-            chan_bits.append(np.zeros((len(chan_t_times.data()),), dtype=int))
 
-            all_t_times.extend(chan_t_times)
-            chan_bits[i][::2]=int(1)
+            # Pair of (transition time, state) for each channel:
+            chan_t_states = chan_t_times.data()
 
-            t_times_bits.append(self.merge(chan_t_times.data(),chan_bits[i]))
+            # Creation of an array that contains as EVERY OTHER element all the transition times in it, adding them
+            # for each channel:
+            for x in np.nditer(chan_t_states):
+                all_t_times_states.append(x) #Appends arrays made of one element,
 
-            # Building the digital wave functions, and add them into the following node:
-            #dwf_chan = self.__getattr__('OUTWF_%3.3d' % (i+1))
-            #dwf_chan.record = output_states[i]
+        # Choosing only the transition times from the appened array:
+        all_t_times = all_t_times_states[0::2]
 
+        # Removing duplicates and then sorting in ascending manner:
         t_times = []
         for i in all_t_times:
-            if i not in t_times:
-                t_times.append(i)
+        if i not in t_times:
+            t_times.append(i)
 
-        t_times_bits_flat = [item for sublist in t_times_bits for item in sublist]
+        # t_times contains the unique set of transitions times used in the experiment:
+        t_times = sorted(np.float64(t_times))
+        print("Transition times %d", %t_times)
 
-        t_times = sorted(t_times)
+        # initialize the state matrix
+        rows, cols = (len(t_times), nchan)
+        state = [[0]*cols]*rows
 
-        for element in t_times:
-            same_t_times = [item for item in t_times_bits_flat 
-                    if item[0] == element]
-            
-            n = 1 # n=1 in the tuple are the transition times
-            bins = [x[n] for x in same_t_times]
-            
+        # Building the state matrix. For each transition times given by t_times, we look for those that
+        # appear in the channel. If a transition time does not appear in that channel, then the state
+        # for this transition time is consider the same as the previous state for this channel (i.e. the state
+        # hasn't changed)
+        i=0
+        for t in t_times:
+            print(i, state[i])     
+            for j in range(nchan):
+                chan_t_states = self.__getattr__('OUTPUT_%3.3d' % (j+1))
+                
+                for s in range(len(chan_t_states[0])):
+                    #Check if the transition time is one of the times that belongs to this channel:
+                    if t in chan_t_states[0][s]:
+                        state[i][j] = int(np.asscalar(chan_t_states[1][s]))
 
+            # Building the string of 1s and 0s for each transition time:
             binstr = ''
-            for element in bins:
+            for element in state[i]:
                 binstr += str(element)
             states_bits.append(binstr)
+            
+            i+=1
 
+        print("State Matrix (ttimes, channel) %i" %states_bits)
+
+        # To Do:
+        # Building the digital wave functions, and add them into the following node:
+        #dwf_chan = self.__getattr__('OUTWF_%3.3d' % (i+1))
+        #dwf_chan.record = output_states[i]
+
+        #Converting those strings into HEX numbers
         for elements in states_bits:
             states_hex.append(hex(int(elements,2))[2:]) # the [2:] is because I don't need to 0x part of the hex string
 
+        # Converting the original units of the transtion times in seconds, to micro-seconts:
         times_usecs = []
         for elements in t_times:
             times_usecs.append(int(elements * 1E6)) #in micro-seconds
+        # Building a pair between the t_times and hex states:
         state_list = zip(times_usecs, states_hex)
 
         #For example, stlpath = '/home/fsantoro/HtsDevice/acq400_hapi/user_apps/STL/do_states.stl'
@@ -176,7 +198,3 @@ class ACQ2106_WRPG(MDSplus.Device):
 
         outputFile.close()
 
-
-    def merge(self, list1, list2): 
-        merged_list = [(list1[i], list2[i]) for i in range(0, len(list1))] 
-        return merged_list
