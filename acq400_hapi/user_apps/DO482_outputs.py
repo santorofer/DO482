@@ -19,35 +19,19 @@ def setTransitionTimes(treeName, nchan, delta):
     end     = 10.0  # sec
 
     times   = np.arange(current, end, delta)
-    times_series = tree.getNode('ACQ2106_WRPG:TIMES')
-    times_series.record = times
-
-    tran_indexes1 = range(0, len(times), 1)
-    tran_indexes2 = range(0, len(times), 2)
-    transitions1=times[tran_indexes1]
-    transitions2=times[tran_indexes2]
 
     #Ex. 1
+    # User selected (transtion times, states):
     transitions1 = np.array([[times[0],int(1)],[times[1],int(0)],[times[2],int(1)],[times[3],int(0)]])
     transitions2 = np.array([[times[1],int(1)],[times[3],int(0)]])
 
     for i in range(nchan):
         t_times = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (i+1))
-        # t_times.record = transitions1
+
         if (i % 2) == 0:  #Even Channels
             t_times.record = transitions1
         else:
             t_times.record = transitions2
-
-    # #Ex. 2
-    # state_matrix = [(times[0], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]),
-    #                 (times[2], [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]),
-    #                 (times[4], [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]),
-    #                 (times[6], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]) ]
-    # tran_states = tree.getNode('ACQ2106_WRPG:TRAN_STATES')
-    # tran_states.record = state_matrix
-
-    # transitions=times[[fib_recursive(i) for i in range(10)]] #a fibonacci series of transition times, as an example.
 
     tree.write()
     tree.close()
@@ -64,19 +48,25 @@ def set_stl(treeName, times, nchan):
 
     for i in range(nchan):
         chan_t_times = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (i+1))
-        #print("Chan %i" %(i+1), chan_t_times.data())
+
+        # Pair of (transition time, state) for each channel:
         chan_t_states = chan_t_times.data()
 
+        # Creation of an array that contains as EVERY OTHER element all the transition times in it, adding them
+        # for each channel:
         for x in np.nditer(chan_t_states):
             all_t_times_states.append(x) #Appends arrays made of one element,
 
+    # Choosing only the transition times:
     all_t_times = all_t_times_states[0::2]
 
+    # Removing duplicates and then sorting in ascending manner:
     t_times = []
     for i in all_t_times:
        if i not in t_times:
           t_times.append(i)
 
+    # t_times contains the unique set of transitions times used in the experiment:
     t_times = sorted(np.float64(t_times))
     print(t_times)
 
@@ -84,6 +74,10 @@ def set_stl(treeName, times, nchan):
     rows, cols = (len(t_times), nchan)
     state = [[0]*cols]*rows
 
+    # Building the state matrix. For each transition times given by t_times, we look for those that
+    # appear in the channel. If a transition time does not appear in that channel, then the state
+    # for this transition time is consider the same as the previous state for this channel (i.e. the state
+    # hasn't changed)
     i=0
     for t in t_times:
         print(i, state[i])     
@@ -91,11 +85,13 @@ def set_stl(treeName, times, nchan):
             chan_t_states = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (j+1))
             
             for s in range(len(chan_t_states[0])):
+                #Check if the transition time is one of the times that belongs to this channel:
                 if t in chan_t_states[0][s]:
                     print("inside Chan%i" %(j+1), t, i, j, int(np.asscalar(chan_t_states[1][s])))
                     state[i][j] = int(np.asscalar(chan_t_states[1][s]))
             print("       Chan%i" %(j+1), t, i, j, state[i][j])
 
+        # Building the string of 1s and 0s for each transition time:
         binstr = ''
         for element in state[i]:
             binstr += str(element)
@@ -105,12 +101,15 @@ def set_stl(treeName, times, nchan):
 
     print(states_bits)
 
+    #Converting those strings into HEX numbers
     for elements in states_bits:
         states_hex.append(hex(int(elements,2))[2:]) # the [2:] is because I don't need to 0x part of the hex string
 
+    # Converting the original units of the transtion times in seconds, to micro-seconts:
     times_usecs = []
     for elements in t_times:
         times_usecs.append(int(elements * 1E6)) #in micro-seconds
+    # Building a pair between the t_times and hex states:
     state_list = zip(times_usecs, states_hex)
 
     stlpath = '/home/fsantoro/HtsDevice/acq400_hapi/user_apps/STL/do_states.stl'
@@ -121,95 +120,7 @@ def set_stl(treeName, times, nchan):
         writer.writerows(state_list)
 
     outputFile.close()
-    print("set_stl done")
 
-
-def STL(treeName, times, nchan):
-    print("set_stl starting")
-    tree = Tree(treeName, -1)
-
-    all_t_times   = []
-    t_times_bits  = [] # the elements are the transition bits, 1s or 0s, for each channel.
-    chan_bits     = []
-
-    states_hex    = []
-    states_bits   = []
-
-    for i in range(nchan):
-        # chan_t_times contains the transition times saved in the DO482:OUTPUT_xxx node
-        chan_t_times = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (i+1))
-        chan_bits.append(np.zeros((len(chan_t_times.data()),), dtype=int))
-
-        print("Chan %i" %(i+1), chan_t_times.data())
-
-        all_t_times.extend(chan_t_times)
-
-        chan_bits[i][::2]=int(1)
-
-        t_times_bits.append(merge(chan_t_times.data(),chan_bits[i]))
-        #print(t_times_bits)
-
-        # Building the digital wave functions, and add them into the following node:
-        #dwf_chan = tree.getNode('ACQ2106_482:OUTWF_%3.3d' % (i+1))
-        #dwf_chan.record = output_states[i
-
-
-    t_times = []
-    for i in all_t_times:
-       if i not in t_times:
-          t_times.append(i)
-
-    print(all_t_times)
-    print(sorted(t_times))
-
-    t_times_bits_flat = [item for sublist in t_times_bits for item in sublist]
-
-    t_times = sorted(t_times)
-
-    same_t_times = []
-    for element in t_times:
-        same_t_times = [item for item in t_times_bits_flat
-             if item[0] == element]
-
-        print(same_t_times)
-
-        n = 1 # First element is the bit associated to that ttransition time
-        bins = [x[n] for x in same_t_times]
-
-        binstr = ''
-        for element in bins:
-            binstr += str(element)
-        states_bits.append(binstr)
-
-    for elements in states_bits:
-        states_hex.append(hex(int(elements,2))[2:]) # the [2:] is because I don't need to 0x part of the hex string
-
-    times_usecs = []
-    for elements in t_times:
-        times_usecs.append(int(elements * 1E6)) #in micro-seconds
-    state_list = zip(times_usecs, states_hex)
-
-    stlpath = '/home/fsantoro/HtsDevice/acq400_hapi/user_apps/STL/do_states.stl'
-    outputFile=open(stlpath, 'w')
-
-    with outputFile as f:
-        writer = csv.writer(f, delimiter=',')
-        writer.writerows(state_list)
-
-    outputFile.close()
-    print("set_stl done")
-
-def merge(list1, list2):
-    merged_list = [(list1[i], list2[i]) for i in range(0, len(list1))]
-    return merged_list
-
-def fib_recursive(n):
-    if n == 0:
-        return 0
-    elif n == 1:
-        return 1
-    else:
-        return fib_recursive(n-1) + fib_recursive(n-2)
 
 if __name__ == '__main__':
     print('argument ',sys.argv[1])
