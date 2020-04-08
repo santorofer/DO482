@@ -8,6 +8,8 @@ import sys
 import csv
 
 def setTransitionTimes(treeName, nchan, delta):
+    #This function is kind of a Unit Test.
+
     tree = Tree(treeName, -1, 'EDIT')
     print('Tree Name: ', treeName)
 
@@ -59,9 +61,10 @@ def set_stl(treeName, times, nchan):
     states_bits   = []
     all_t_times   = []
     all_t_times_states = []
+
     for i in range(nchan):
         chan_t_times = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (i+1))
-        print("Chan %i" %(i+1), chan_t_times.data())
+        #print("Chan %i" %(i+1), chan_t_times.data())
         chan_t_states = chan_t_times.data()
 
         for x in np.nditer(chan_t_states):
@@ -83,14 +86,15 @@ def set_stl(treeName, times, nchan):
 
     i=0
     for t in t_times:
+        print(i, state[i])     
         for j in range(nchan):
             chan_t_states = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (j+1))
             
-            for k in range(len(chan_t_states[0])):
-                if t in chan_t_states[0][k]:
-                    print("Chan %i" %(j+1), t, chan_t_states[1][k])
-                    state[i][j] = int(np.asscalar(chan_t_states[1][k]))
-                    print(i, j, state[i][j])
+            for s in range(len(chan_t_states[0])):
+                if t in chan_t_states[0][s]:
+                    print("inside Chan%i" %(j+1), t, i, j, int(np.asscalar(chan_t_states[1][s])))
+                    state[i][j] = int(np.asscalar(chan_t_states[1][s]))
+            print("       Chan%i" %(j+1), t, i, j, state[i][j])
 
         binstr = ''
         for element in state[i]:
