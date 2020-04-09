@@ -153,7 +153,6 @@ class ACQ2106_WRPG(MDSplus.Device):
         # hasn't changed)
         i=0
         for t in t_times:
-            print(i, state[i])     
             for j in range(nchan):
                 chan_t_states = self.__getattr__('OUTPUT_%3.3d' % (j+1))
                 
