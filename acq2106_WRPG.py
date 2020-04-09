@@ -137,12 +137,11 @@ class ACQ2106_WRPG(MDSplus.Device):
         # Removing duplicates and then sorting in ascending manner:
         t_times = []
         for i in all_t_times:
-        if i not in t_times:
-            t_times.append(i)
+            if i not in t_times:
+                t_times.append(i)
 
         # t_times contains the unique set of transitions times used in the experiment:
         t_times = sorted(np.float64(t_times))
-        print("Transition times %d", %t_times)
 
         # initialize the state matrix
         rows, cols = (len(t_times), nchan)
@@ -171,7 +170,6 @@ class ACQ2106_WRPG(MDSplus.Device):
             
             i+=1
 
-        print("State Matrix (ttimes, channel) %i" %states_bits)
 
         # To Do:
         # Building the digital wave functions, and add them into the following node:
