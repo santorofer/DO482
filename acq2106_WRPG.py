@@ -102,7 +102,7 @@ class ACQ2106_WRPG(MDSplus.Device):
 
     def load_stl_file(self,traces):
         example_stl=self.stl_file.data()    
-        
+
         print('Path to State Table: ', example_stl)
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         uut.s0.trace = traces
@@ -163,7 +163,7 @@ class ACQ2106_WRPG(MDSplus.Device):
 
             # Building the string of 1s and 0s for each transition time:
             binstr = ''
-            for element in state[i]:
+            for element in np.flip(state[i]):
                 binstr += str(element)
             states_bits.append(binstr)
             

@@ -80,7 +80,6 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         {'path':':WRTD_EVENT', 'type': 'NUMERIC', 'options':('no_write_shot',)},
         {'path':':WRTD_TIME' , 'type': 'NUMERIC'   , 'options':('no_write_shot',)},
         {'path':':STL_FILE',   'type':'TEXT'},
-        {'path':':TIMES',      'type': 'NUMERIC', 'options':('no_write_shot',)},
     ]
 
     data_socket = -1
@@ -280,9 +279,9 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
 
         #Setting WR Clock to 20MHz by first being sure that MBCLK FIN is in fact = 0
-        print('Setting CLK_MB: starting')
-        uut.s0.SIG_CLK_MB_FIN = '0'
-        print('Setting CLK_MB: done')
+        #print('Setting CLK_MB: starting')
+        #uut.s0.SIG_CLK_MB_FIN = '0'
+        #print('Setting CLK_MB: done')
 
         #Setting SYNC Main Timing Highway Source Routing --> White Rabbit Time Trigger
         uut.s0.SIG_SRC_TRG_0 ='WRTT'
@@ -294,12 +293,12 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         #uut.s0.TRANSIENT_POST = '50000' #post number of samples
 
         #Setting the MBCLK FIN and WR clock CLK d1
-        uut.s0.SIG_CLK_MB_FIN = 0
+        #uut.s0.SIG_CLK_MB_FIN = 0
 
         #The following is what the ACQ script called "/mnt/local/set_clk_WR" does to set the WR clock to 20MHz
-        uut.s0.SYS_CLK_FPMUX     = 'ZCLK'
-        uut.s0.SIG_ZCLK_SRC      = 'WR31M25'
-        uut.s0.set_si5326_bypass = 'si5326_31M25-20M.txt'
+        #uut.s0.SYS_CLK_FPMUX     = 'ZCLK'
+        #uut.s0.SIG_ZCLK_SRC      = 'WR31M25'
+        #uut.s0.set_si5326_bypass = 'si5326_31M25-20M.txt'
       
         self.running.on=True
         thread = self.MDSWorker(self)
