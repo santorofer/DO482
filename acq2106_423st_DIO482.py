@@ -277,6 +277,13 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         else:
             uut.s1.set_knob('trg', '1,1,1')
 
+        #Set the Sampling rate in the ACQ:
+        role = 'master'
+        print("Setting sample rate to {} and {} ".format(role, self.freq.data()))
+        uut.s0.sync_role = "{} {}".format(role, self.freq.data())
+
+        acq_freq = uu.s0.SIG_CLK_S1_FREQ
+        print("The  sample rate (after setting) in the ACQ is {} and {} ".format(acq_freq))
 
         #Setting WR Clock to 20MHz by first being sure that MBCLK FIN is in fact = 0
         #print('Setting CLK_MB: starting')
@@ -292,14 +299,18 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         uut.s1.TRG_SENSE ='rising'
         #uut.s0.TRANSIENT_POST = '50000' #post number of samples
 
-        #Setting the MBCLK FIN and WR clock CLK d1
-        #uut.s0.SIG_CLK_MB_FIN = 0
-
         #The following is what the ACQ script called "/mnt/local/set_clk_WR" does to set the WR clock to 20MHz
         #uut.s0.SYS_CLK_FPMUX     = 'ZCLK'
         #uut.s0.SIG_ZCLK_SRC      = 'WR31M25'
         #uut.s0.set_si5326_bypass = 'si5326_31M25-20M.txt'
       
+        #Setting the trigger in the GPG module
+        uut.s0.GPG_ENABLE    ='enable'
+        uut.s0.GPG_TRG       ='1'    #external=1, internal=0
+        uut.s0.GPG_TRG_DX    ='d0'
+        uut.s0.GPG_TRG_SENSE ='rising'
+        uut.s0.GPG_MODE      ='ONCE'
+        
         self.running.on=True
         thread = self.MDSWorker(self)
         thread.start()
@@ -307,6 +318,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
     def stop(self):
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
+
         uut.s0.set_abort = '1'
 
         #print('Set Clean up')

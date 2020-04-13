@@ -16,14 +16,25 @@ def setTransitionTimes(treeName, nchan, delta):
     nchan   = int(nchan)
     current = 0.0
     delta   = float(delta) # sec
-    end     = 10.0  # sec
+    end     = 40.0  # sec
 
     times   = np.arange(current, end, delta)
 
     #Ex. 1
     # User selected (transtion times, states):
-    transitions1 = np.array([[times[0],int(1)],[times[1],int(0)],[times[2],int(1)],[times[3],int(0)]])
-    transitions2 = np.array([[times[1],int(1)],[times[3],int(0)]])
+    # transitions1 = np.array([[times[0],int(1)],[times[1],int(0)],[times[2],int(1)],[times[3],int(0)]])
+    # transitions2 = np.array([[times[1],int(1)],[times[3],int(0)]])
+
+    transitions1 = np.array([[times[0],int(0)], [times[1]/10,int(1)], [times[1]*2/10,int(0)],
+                            [times[20],int(0)], [times[21],int(1)],
+                            [times[23],int(0)], [times[24],int(1)],[times[25],int(0)],
+                            [times[26],int(1)], [times[27],int(1)],[times[28],int(1)],
+                            [times[29],int(1)], [times[30],int(0)], [times[31],int(1)],
+                            [times[32],int(0)], [times[33],int(1)], [times[34],int(0)],
+                            [times[35],int(1)], [times[36],int(0)], [times[37],int(1)],
+                            [times[38],int(0)], [times[39],int(1)]]
+                            )
+    transitions2 = np.array([[times[0],int(0)],[times[23],int(1)]])
 
     for i in range(nchan):
         t_times = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (i+1))
@@ -80,20 +91,20 @@ def set_stl(treeName, times, nchan):
     # hasn't changed)
     i=0
     for t in t_times:
-        print(i, state[i])     
+        #print(i, state[i])     
         for j in range(nchan):
             chan_t_states = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (j+1))
-            
+
             for s in range(len(chan_t_states[0])):
                 #Check if the transition time is one of the times that belongs to this channel:
                 if t in chan_t_states[0][s]:
-                    print("inside Chan%i" %(j+1), t, i, j, int(np.asscalar(chan_t_states[1][s])))
+                    #print("inside Chan%i" %(j+1), t, i, j, int(np.asscalar(chan_t_states[1][s])))
                     state[i][j] = int(np.asscalar(chan_t_states[1][s]))
-            print("       Chan%i" %(j+1), t, i, j, state[i][j])
+            #print("       Chan%i" %(j+1), t, i, j, state[i][j])
 
         # Building the string of 1s and 0s for each transition time:
         binstr = ''
-        for element in state[i]:
+        for element in np.flip(state[i]):
             binstr += str(element)
         states_bits.append(binstr)
         

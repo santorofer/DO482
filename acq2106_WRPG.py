@@ -80,12 +80,12 @@ class ACQ2106_WRPG(MDSplus.Device):
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         print('uut ready')
         
-        #Setting the trigger in the GPG module
-        uut.s0.GPG_ENABLE    ='enable'
-        uut.s0.GPG_TRG       ='1'    #external=1, internal=0
-        uut.s0.GPG_TRG_DX    ='d0'
-        uut.s0.GPG_TRG_SENSE ='rising'
-        uut.s0.GPG_MODE      ='ONCE'
+        # #Setting the trigger in the GPG module
+        # uut.s0.GPG_ENABLE    ='enable'
+        # uut.s0.GPG_TRG       ='1'    #external=1, internal=0
+        # uut.s0.GPG_TRG_DX    ='d0'
+        # uut.s0.GPG_TRG_SENSE ='rising'
+        # uut.s0.GPG_MODE      ='ONCE'
 
         #Create the STL table from a series of transition times.
         print("Building STL: start")
