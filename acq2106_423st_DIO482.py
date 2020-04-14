@@ -32,7 +32,7 @@ import numpy as np
 import csv
 
 try:
-    print('Imporing acq400_hapi: starting')
+    print('Importing acq400_hapi: starting')
     acq400_hapi = __import__('acq400_hapi', globals(), level=1)
     print('Importing acq400_hapi: done')
 except:
@@ -248,6 +248,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
                             self.full_buffers.put(buf)
 
     def init(self):
+        import re
         print('Init: starting')
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         print('uut ready')
@@ -277,18 +278,26 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         else:
             uut.s1.set_knob('trg', '1,1,1')
 
-        #Set the Sampling rate in the ACQ:
-        role = 'master'
-        print("Setting sample rate to {} and {} ".format(role, self.freq.data()))
-        uut.s0.sync_role = "{} {}".format(role, self.freq.data())
-
-        acq_freq = uu.s0.SIG_CLK_S1_FREQ
-        print("The  sample rate (after setting) in the ACQ is {} and {} ".format(acq_freq))
-
         #Setting WR Clock to 20MHz by first being sure that MBCLK FIN is in fact = 0
-        #print('Setting CLK_MB: starting')
-        #uut.s0.SIG_CLK_MB_FIN = '0'
-        #print('Setting CLK_MB: done')
+        print('Setting CLK_MB: starting')
+        uut.s0.SIG_CLK_MB_FIN = '0'
+        print('Setting CLK_MB: done')
+
+        #Set the Sampling rate in the ACQ:
+        # MB Clock (WR Clock):
+        mb_freq = uut.s0.SIG_CLK_MB_FREQ
+
+        print("Setting sample rate to {} ".format(self.freq.data()))
+        clockdiv      = float(re.findall("\d+\.\d+", mb_freq)[0])/self.freq.data()
+        uut.s1.CLKDIV = "{}".format(clockdiv)
+
+        acq_sample_freq = uut.s0.SIG_CLK_S1_FREQ
+        print("The  sample rate (after setting) in the ACQ is {}".format(acq_sample_freq))
+
+        #The following is what the ACQ script called "/mnt/local/set_clk_WR" does to set the WR clock to 20MHz
+        uut.s0.SYS_CLK_FPMUX     = 'ZCLK'
+        uut.s0.SIG_ZCLK_SRC      = 'WR31M25'
+        uut.s0.set_si5326_bypass = 'si5326_31M25-20M.txt'
 
         #Setting SYNC Main Timing Highway Source Routing --> White Rabbit Time Trigger
         uut.s0.SIG_SRC_TRG_0 ='WRTT'
@@ -298,11 +307,6 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         uut.s1.TRG_DX    ='d0'
         uut.s1.TRG_SENSE ='rising'
         #uut.s0.TRANSIENT_POST = '50000' #post number of samples
-
-        #The following is what the ACQ script called "/mnt/local/set_clk_WR" does to set the WR clock to 20MHz
-        #uut.s0.SYS_CLK_FPMUX     = 'ZCLK'
-        #uut.s0.SIG_ZCLK_SRC      = 'WR31M25'
-        #uut.s0.set_si5326_bypass = 'si5326_31M25-20M.txt'
       
         #Setting the trigger in the GPG module
         uut.s0.GPG_ENABLE    ='enable'
