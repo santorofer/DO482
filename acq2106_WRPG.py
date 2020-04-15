@@ -32,9 +32,7 @@ import numpy as np
 import csv
 
 try:
-    print('Importing acq400_hapi: starting')
     acq400_hapi = __import__('acq400_hapi', globals(), level=1)
-    print('Importing acq400_hapi: done')
 except:
     acq400_hapi = __import__('acq400_hapi', globals())
 
