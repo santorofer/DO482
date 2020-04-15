@@ -63,31 +63,27 @@ class ACQ2106_WRPG(MDSplus.Device):
         {'path':':NODE',        'type':'text',                     'options':('no_write_shot',)},
         {'path':':COMMENT',     'type':'text',                     'options':('no_write_shot',)},
         {'path':':TRIG_TIME',   'type':'numeric',                  'options':('write_shot',)},
-        {'path':':RUNNING',     'type':'numeric',                  'options':('no_write_model',)},
-        {'path':':LOG_FILE',    'type':'text',   'options':('write_once',)},
+        {'path':':RUNNING',     'type':'numeric',                  'options':('no_write_model',)},s
         {'path':':LOG_OUTPUT',  'type':'text',   'options':('no_write_model', 'write_once', 'write_shot',)},
         {'path':':INIT_ACTION', 'type':'action', 'valueExpr':"Action(Dispatch('CAMAC_SERVER','INIT',50,None),Method(None,'INIT',head))",'options':('no_write_shot',)},
         {'path':':STOP_ACTION', 'type':'action', 'valueExpr':"Action(Dispatch('CAMAC_SERVER','STORE',50,None),Method(None,'STOP',head))",      'options':('no_write_shot',)},
-        {'path':':STL_FILE',   'type':'TEXT'},
+        {'path':':STL_FILE',    'type':'TEXT'},
     ]
 
     for j in range(32):
         parts.append({'path':':OUTPUT_%3.3d' % (j+1,), 'type':'NUMERIC', 'options':('no_write_shot',)})
-        parts.append({'path':':OUTWF_%3.3d' % (j+1,),  'type':'NUMERIC', 'options':('no_write_model',)})
 
     def init(self):
-        print('GPG INIT: starting')
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
-        print('uut ready')
-        
-        # #Setting the trigger in the GPG module
-        # uut.s0.GPG_ENABLE    ='enable'
-        # uut.s0.GPG_TRG       ='1'    #external=1, internal=0
-        # uut.s0.GPG_TRG_DX    ='d0'
-        # uut.s0.GPG_TRG_SENSE ='rising'
-        # uut.s0.GPG_MODE      ='ONCE'
 
-        #Create the STL table from a series of transition times.
+        # #Setting the trigger in the GPG module
+        uut.s0.GPG_ENABLE    ='enable'
+        uut.s0.GPG_TRG       ='1'    #external=1, internal=0
+        uut.s0.GPG_TRG_DX    ='d0'
+        uut.s0.GPG_TRG_SENSE ='rising'
+        uut.s0.GPG_MODE      ='ONCE'
+
+        #Create the STL table from a series of transition times and states given in OUTPUT.
         print("Building STL: start")
         self.set_stl()
         print("Building STL: end")
@@ -169,11 +165,6 @@ class ACQ2106_WRPG(MDSplus.Device):
             
             i+=1
 
-
-        # To Do:
-        # Building the digital wave functions, and add them into the following node:
-        #dwf_chan = self.__getattr__('OUTWF_%3.3d' % (i+1))
-        #dwf_chan.record = output_states[i]
 
         #Converting those strings into HEX numbers
         for elements in states_bits:
