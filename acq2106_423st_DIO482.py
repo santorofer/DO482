@@ -248,12 +248,8 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
                             self.full_buffers.put(buf)
 
     def init(self):
-        import re
-        print('Init: starting')
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
-        print('uut ready')
 
-        #print('appending slots: starting')
         try:
             slots = [uut.s1]
             slots.append(uut.s2)
@@ -284,15 +280,17 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         print('Setting CLK_MB: done')
 
         #Set the Sampling rate in the ACQ:
-        # MB Clock (WR Clock):
-        mb_freq = uut.s0.SIG_CLK_MB_FREQ
+        # MB Clock (WR Clock): 20MHz
+        # mb_freq = uut.s0.SIG_CLK_MB_FREQ
+        mb_freq = 20000000.00 #MHz
 
-        print("Setting sample rate to {} ".format(self.freq.data()))
-        clockdiv      = float(re.findall("\d+\.\d+", mb_freq)[0])/self.freq.data()
+        print("Setting sample rate to {} Hz".format(self.freq.data()))
+        clockdiv      = mb_freq/self.freq.data()
+
         uut.s1.CLKDIV = "{}".format(clockdiv)
 
         acq_sample_freq = uut.s0.SIG_CLK_S1_FREQ
-        print("The  sample rate (after setting) in the ACQ is {}".format(acq_sample_freq))
+        print("After setting the sample rate the value in the ACQ is {} Hz".format(acq_sample_freq))
 
         #The following is what the ACQ script called "/mnt/local/set_clk_WR" does to set the WR clock to 20MHz
         uut.s0.SYS_CLK_FPMUX     = 'ZCLK'
@@ -309,11 +307,11 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         #uut.s0.TRANSIENT_POST = '50000' #post number of samples
       
         #Setting the trigger in the GPG module
-        uut.s0.GPG_ENABLE    ='enable'
-        uut.s0.GPG_TRG       ='1'    #external=1, internal=0
-        uut.s0.GPG_TRG_DX    ='d0'
-        uut.s0.GPG_TRG_SENSE ='rising'
-        uut.s0.GPG_MODE      ='ONCE'
+        # uut.s0.GPG_ENABLE    ='enable'
+        # uut.s0.GPG_TRG       ='1'    #external=1, internal=0
+        # uut.s0.GPG_TRG_DX    ='d0'
+        # uut.s0.GPG_TRG_SENSE ='rising'
+        # uut.s0.GPG_MODE      ='ONCE'
         
         self.running.on=True
         thread = self.MDSWorker(self)
