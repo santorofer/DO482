@@ -10,7 +10,7 @@
 # Output: the STL file. Eg. do_states.stl
 #
 # Usage:
-# python3 ~/HtsDevice//acq400_hapi/user_apps/DO482_outputs.py daqtest 32 1 "/home/fsantoro/HtsDevice/acq400_hapi/user_apps/STL/do_states.stl"
+# python3 ~/HtsDevice//acq400_hapi/user_apps/user_ttimes.py daqtest 32 1 "/home/fsantoro/HtsDevice/acq400_hapi/user_apps/STL/do_states.stl"
 
 
 
@@ -45,7 +45,7 @@ def setTransitionTimes(treeName, nchan, delta, stlpath):
                             [times[18],int(0)], [times[19],int(1)], [times[30],int(0)]]
                             )
 
-    transitions2 = np.array([[times[0],int(0)],[times[3],int(1)]])
+    transitions2 = np.array([[times[0],int(0)],[times[3],int(1)], [times[7],int(0)]])
 
 
     for i in range(nchan):
@@ -96,22 +96,27 @@ def set_stl(treeName, times, nchan, stlpath):
     rows, cols = (len(t_times), nchan)
     state = [[0]*cols]*rows
 
-    # Building the state matrix. For each transition times given by t_times, we look for those that
+    # Building the state matrix. For each transition times given by t_times, we look for those times that
     # appear in the channel. If a transition time does not appear in that channel, then the state
-    # for this transition time is consider the same as the previous state for this channel (i.e. the state
-    # hasn't changed)
+    # doesn't change.
+
     i=0
     for t in t_times:
-        #print(i, state[i])     
+        # print(i, state[i])     
         for j in range(nchan):
             chan_t_states = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (j+1))
-
+            
+            # chan_t_states its elements are pairs of [ttimes, state]. e.g [[0.0, 0],[1.0, 1],...]
+            # chan_t_states[0] are all the first elements of those pairs, i.e the trans. times: e.g [[1D0], [2D0], [3D0], [4D0] ... ]
+            # chan_t_states[1] are all the second elements of those pairs, the states: .e.g [[0],[1],...]
             for s in range(len(chan_t_states[0])):
+                
                 #Check if the transition time is one of the times that belongs to this channel:
                 if t in chan_t_states[0][s]:
-                    #print("inside Chan%i" %(j+1), t, i, j, int(np.asscalar(chan_t_states[1][s])))
+                    # print("inside Chan%i" %(j+1), t, i, j, int(np.asscalar(chan_t_states[1][s])), s)
                     state[i][j] = int(np.asscalar(chan_t_states[1][s]))
-            #print("       Chan%i" %(j+1), t, i, j, state[i][j])
+
+            print(t, i, j, "state: ", state[i][j])
 
         # Building the string of 1s and 0s for each transition time:
         binstr = ''
