@@ -20,30 +20,16 @@ def setTransitionTimes(treeName, nchan, delta):
 
     times   = np.arange(current, end, delta)
 
-    #Ex. 1
-    # User selected (transtion times, states):
-    # transitions1 = np.array([[times[0],int(1)],[times[1],int(0)],[times[2],int(1)],[times[3],int(0)]])
-    # transitions2 = np.array([[times[1],int(1)],[times[3],int(0)]])
-
     transitions1 = np.array([
                             [times[1],int(0)], [times[2],int(1)],
                             [times[3],int(0)], [times[4],int(1)],[times[5],int(0)],
-                            [times[6],int(1)], [times[7],int(1)],[times[8],int(1)],
+                            [times[6],int(1)], [times[8],int(1)],
                             [times[9],int(1)], [times[10],int(0)], [times[11],int(1)],
                             [times[12],int(0)], [times[13],int(1)], [times[14],int(0)],
                             [times[15],int(1)], [times[16],int(0)], [times[17],int(1)],
                             [times[18],int(0)], [times[19],int(1)], [times[30],int(0)]]
                             )
 
-        # transitions1 = np.array([[times[0],int(0)], [times[1]/10,int(1)], [times[1]*2/10,int(0)],
-        #                     [times[20],int(0)], [times[21],int(1)],
-        #                     [times[23],int(0)], [times[24],int(1)],[times[25],int(0)],
-        #                     [times[26],int(1)], [times[27],int(1)],[times[28],int(1)],
-        #                     [times[29],int(1)], [times[30],int(0)], [times[31],int(1)],
-        #                     [times[32],int(0)], [times[33],int(1)], [times[34],int(0)],
-        #                     [times[35],int(1)], [times[36],int(0)], [times[37],int(1)],
-        #                     [times[38],int(0)], [times[39],int(1)]]
-        #                     )
     transitions2 = np.array([[times[0],int(0)],[times[3],int(1)]])
 
 
