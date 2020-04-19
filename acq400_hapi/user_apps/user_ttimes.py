@@ -95,61 +95,47 @@ def set_stl(treeName, times, nchan, stlpath):
 
     # initialize the state matrix
     rows, cols = (len(t_times), nchan)
-    state = [[0]*cols]
+    state = [[0 for i in range(cols)] for j in range(rows)]
 
-    # # initialize the state matrix
-    # rows, cols = (len(t_times), nchan)
-    # state = [[0]]
-
-    print(state)
 
     # Building the state matrix. For each transition times given by t_times, we look for those times that
     # appear in the channel. If a transition time does not appear in that channel, then the state
     # doesn't change.
-
-    # for i in range(len(t_times)):
-    #     if i == 0:
-    #         state.append([0]*cols)
-    #     else:
-    #         state.append(state[i-1])
-
-    for i in range(len(t_times)):
-        print(i, state[i])     
-        for j in range(nchan):
-            chan_t_states = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (j+1))
-            
-            # chan_t_states its elements are pairs of [ttimes, state]. e.g [[0.0, 0],[1.0, 1],...]
-            # chan_t_states[0] are all the first elements of those pairs, i.e the trans. times: e.g [[1D0], [2D0], [3D0], [4D0] ... ]
-            # chan_t_states[1] are all the second elements of those pairs, the states: .e.g [[0],[1],...]
-            for s in range(len(chan_t_states[0])):
+    for j in range(nchan):
+        chan_t_states = tree.getNode('ACQ2106_WRPG:OUTPUT_%3.3d' % (j+1))
+        for i in range(len(t_times)):
+            #print(j, i, state[i][j])     
+            if i == 0:
+                state[i][j] = 0
+            else:
+                state[i][j] = state[i-1][j]
                 
-                #Check if the transition time is one of the times that belongs to this channel:
-                if t_times[i] == chan_t_states[0][s][0]:
-                    print("inside ", int(chan_t_states[1][s][0]))
-                    state[i][j] = int(chan_t_states[1][s][0])
+                # chan_t_states its elements are pairs of [ttimes, state]. e.g [[0.0, 0],[1.0, 1],...]
+                # chan_t_states[0] are all the first elements of those pairs, i.e the trans. times: e.g [[1D0], [2D0], [3D0], [4D0] ... ]
+                # chan_t_states[1] are all the second elements of those pairs, the states: .e.g [[0],[1],...]
+                for t in range(len(chan_t_states[0])):
+                    
+                    #Check if the transition time is one of the times that belongs to this channel:
+                    if t_times[i] == chan_t_states[0][t][0]:
+                        #print("t_times is in chan ", int(chan_t_states[1][t][0]))
+                        state[i][j] = int(chan_t_states[1][t][0])
 
-            print(t_times[i], "channel: ", j + 1, "state: ", state[i][j])
-            print(i, state[i])
-            print(state)    
 
-        # Building the string of 1s and 0s for each transition time:
-        binstr = ''
-        for element in np.flip(state[i]):
-            binstr += str(element)
-        states_bits.append(binstr)
-        
-        state.append(copy.deepcopy(state[i]))
-        # state.append(state[i])
 
-    print(states_bits)
-    print(state)
+    # Building the string of 1s and 0s for each transition time:
+    binrows = []
+    for row in state:
+        rowstr = [str(i) for i in np.flip(row)]  
+        binrows.append(''.join(rowstr))
+
+    print(binrows)
 
     # Converting the original units of the transtion times in seconds, to micro-seconts:
     times_usecs = []
     for elements in t_times:
         times_usecs.append(int(elements * 1E6)) #in micro-seconds
     # Building a pair between the t_times and hex states:
-    state_list = zip(times_usecs, states_bits)
+    state_list = zip(times_usecs, binrows)
 
     f=open(stlpath, 'w')
 
@@ -161,5 +147,8 @@ def set_stl(treeName, times, nchan, stlpath):
 
 if __name__ == '__main__':
     print('argument ',sys.argv[1])
+    start_time = time.time()
     setTransitionTimes(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    print("--- %s seconds ---" % (time.time() - start_time))
+
 
