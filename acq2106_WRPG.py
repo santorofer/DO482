@@ -30,6 +30,7 @@ import socket
 import math
 import numpy as np
 import csv
+import copy
 
 try:
     acq400_hapi = __import__('acq400_hapi', globals(), level=1)
@@ -140,7 +141,7 @@ class ACQ2106_WRPG(MDSplus.Device):
         # initialize the state matrix
         cols = nchan
         state = [[0]*cols]
-        
+
         # Building the state matrix. For each transition times given by t_times, we look for those times that
         # appear in the channel. If a transition time does not appear in that channel, then the state
         # doesn't change.
