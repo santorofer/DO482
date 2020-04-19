@@ -96,12 +96,22 @@ def set_stl(treeName, times, nchan, stlpath):
     # initialize the state matrix
     rows, cols = (len(t_times), nchan)
     state = [[0]*cols]
-    
+
+    # # initialize the state matrix
+    # rows, cols = (len(t_times), nchan)
+    # state = [[0]]
+
     print(state)
 
     # Building the state matrix. For each transition times given by t_times, we look for those times that
     # appear in the channel. If a transition time does not appear in that channel, then the state
     # doesn't change.
+
+    # for i in range(len(t_times)):
+    #     if i == 0:
+    #         state.append([0]*cols)
+    #     else:
+    #         state.append(state[i-1])
 
     for i in range(len(t_times)):
         print(i, state[i])     
@@ -152,3 +162,4 @@ def set_stl(treeName, times, nchan, stlpath):
 if __name__ == '__main__':
     print('argument ',sys.argv[1])
     setTransitionTimes(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+

@@ -305,13 +305,6 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         uut.s1.TRG_DX    ='d0'
         uut.s1.TRG_SENSE ='rising'
         #uut.s0.TRANSIENT_POST = '50000' #post number of samples
-      
-        #Setting the trigger in the GPG module
-        # uut.s0.GPG_ENABLE    ='enable'
-        # uut.s0.GPG_TRG       ='1'    #external=1, internal=0
-        # uut.s0.GPG_TRG_DX    ='d0'
-        # uut.s0.GPG_TRG_SENSE ='rising'
-        # uut.s0.GPG_MODE      ='ONCE'
         
         self.running.on=True
         thread = self.MDSWorker(self)

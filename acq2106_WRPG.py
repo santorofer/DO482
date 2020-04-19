@@ -165,6 +165,7 @@ def set_stl(self):
             binstr += str(element)
         states_bits.append(binstr)
         
+        # If the transition time is not in that channel, then keep a copy of the state of the previous channel
         state.append(copy.deepcopy(state[i]))
 
     # Converting the original units of the transtion times in seconds, to micro-seconts:
