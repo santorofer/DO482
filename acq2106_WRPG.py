@@ -157,7 +157,6 @@ class ACQ2106_WRPG(MDSplus.Device):
                     
                     #Check if the transition time is one of the times that belongs to this channel:
                     if t_times[i] == chan_t_states[0][s][0]:
-                        print("inside ", int(chan_t_states[1][s][0]))
                         state[i][j] = int(chan_t_states[1][s][0]) 
 
             # Building the string of 1s and 0s for each transition time:
