@@ -131,8 +131,8 @@ class ACQ2106_WRPG(MDSplus.Device):
         # Removing duplicates and then sorting in ascending manner:
         t_times = []
         for i in all_t_times:
-        if i not in t_times:
-            t_times.append(i)
+            if i not in t_times:
+                t_times.append(i)
 
         # t_times contains the unique set of transitions times used in the experiment:
         t_times = sorted(np.float64(t_times))
