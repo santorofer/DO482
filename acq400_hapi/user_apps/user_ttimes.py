@@ -114,7 +114,6 @@ def set_stl(treeName, times, nchan, stlpath):
                 # chan_t_states[0] are all the first elements of those pairs, i.e the trans. times: e.g [[1D0], [2D0], [3D0], [4D0] ... ]
                 # chan_t_states[1] are all the second elements of those pairs, the states: .e.g [[0],[1],...]
                 for t in range(len(chan_t_states[0])):
-                    
                     #Check if the transition time is one of the times that belongs to this channel:
                     if t_times[i] == chan_t_states[0][t][0]:
                         #print("t_times is in chan ", int(chan_t_states[1][t][0]))
