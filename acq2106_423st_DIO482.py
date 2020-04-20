@@ -201,14 +201,13 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
                 print('ACQ armed. Waiting for a trigger.')
 
-
                 # trigger time out count initialization:
                 first = True
                 while self.running:
                     try:
                         buf = self.empty_buffers.get(block=False)
                     except Empty:
-                        #print("NO BUFFERS AVAILABLE. MAKING NEW ONE")
+                        # print("NO BUFFERS AVAILABLE. MAKING NEW ONE")
                         buf = bytearray(self.segment_bytes)
                         
                     toread =self.segment_bytes
@@ -223,7 +222,7 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
                             toread -= nbytes
 
                     except socket.timeout as e:
-                        #print("Got a timeout.")
+                        # print("Got a timeout.")
                         err = e.args[0]
                         # this next if/else is a bit redundant, but illustrates how the
                         # timeout exception is setup
@@ -275,13 +274,10 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
             uut.s1.set_knob('trg', '1,1,1')
 
         #Setting WR Clock to 20MHz by first being sure that MBCLK FIN is in fact = 0
-        print('Setting CLK_MB: starting')
         uut.s0.SIG_CLK_MB_FIN = '0'
-        print('Setting CLK_MB: done')
 
-        #Set the Sampling rate in the ACQ:
+        # Set the Sampling rate in the ACQ:
         # MB Clock (WR Clock): 20MHz
-        # mb_freq = uut.s0.SIG_CLK_MB_FREQ
         mb_freq = 20000000.00 #MHz
 
         print("Setting sample rate to {} Hz".format(self.freq.data()))
@@ -304,7 +300,6 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
         uut.s1.TRG       ='enable'
         uut.s1.TRG_DX    ='d0'
         uut.s1.TRG_SENSE ='rising'
-        #uut.s0.TRANSIENT_POST = '50000' #post number of samples
         
         self.running.on=True
         thread = self.MDSWorker(self)
@@ -335,9 +330,9 @@ class _ACQ2106_423ST_DIO482(MDSplus.Device):
 
         #wrtdtx = '1 --tx_id=' + message +' tx_immediate'  #triggered at once (equivalent to soft-trigger)
         ##wrtdtx = '1 --tx_id=' + message                  #triggered when it sees a rising edge
-        #
         #uut.s0.wrtd_tx = wrtdtx
 
+        # Using new knob
         wrtdtx = '1 --tx_id=' + message
         uut.s0.wrtd_tx_immediate = wrtdtx
     TRIG=trig
