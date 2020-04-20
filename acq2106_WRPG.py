@@ -39,18 +39,7 @@ class ACQ2106_WRPG(MDSplus.Device):
     """
     D-Tacq ACQ2106 with ACQ423 Digitizers (up to 6)  real time streaming support.
 
-    32 Channels * number of slots
-    Minimum 2Khz Operation
-    24 bits == +-10V
-
-    3 trigger modes:
-      Automatic - starts recording on arm
-      Soft - starts recording on trigger method (reboot / configuration required to switch )
-      Hard - starts recording on hardware trigger input
-
-    Software sample decimation
-
-    Settable segment length in number of samples
+    DIO with 32 channels
 
     debugging() - is debugging enabled.  Controlled by environment variable DEBUG_DEVICES
 
