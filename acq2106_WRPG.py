@@ -100,7 +100,7 @@ class ACQ2106_WRPG(MDSplus.Device):
     def load_stl_file(self,traces):
         stl_table = self.stl_file.data()    
 
-        print('Path to State Table: ', stl_table)
+        print('Path to State Table: {}'.format(stl_table))
         uut = acq400_hapi.Acq400(self.node.data(), monitor=False)
         uut.s0.trace = traces
         
